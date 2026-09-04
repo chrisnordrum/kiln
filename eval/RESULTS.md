@@ -158,7 +158,9 @@ It took 35 shell commands, against 8 for task 4.
 
 ### Language
 
-**L1 — action parameters cannot be nullable.** A schema field takes `?`; an
+*(L1 and the task-3 link gap are fixed; L2 remains.)*
+
+**L1 — FIXED (P2).** Action parameters could not be nullable. A schema field takes `?`; an
 `in` parameter does not (K010: `"?" is not a parameter modifier`). So a
 nullable column is fed by a non-nullable parameter, an empty textarea stores
 `""` rather than null, and every reader has to handle both. That is the whole
@@ -173,6 +175,8 @@ structure before any layout begins, so the cap should count view depth from
 
 ### Diagnostics
 
+*(the task-3 silent failure is fixed as K026; D1 and D2 remain.)*
+
 **D1 — K040's root key is too specific.** One deleted guard produced three
 diagnostics, one per action bound from the route. The Root is
 `reach:<action>:<route>`, so the cascade machinery cannot collapse them. It
@@ -183,6 +187,8 @@ not each action that trips over it.
 task 4, which is the test of it.
 
 ### Docs
+
+*(Doc1 partly addressed: nullability and dynamic links are now documented.)*
 
 **Doc1 — two rules cost a cycle each and are not written down:** that `in`
 parameters take no `?`, and that a condition needs a real bool (there is no
