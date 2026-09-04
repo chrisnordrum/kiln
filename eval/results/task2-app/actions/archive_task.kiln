@@ -1,0 +1,9 @@
+action archive_task
+  in
+    id ref Task
+  allow session.user == Task[id].project.owner
+  do
+    set Task[id].archived = true
+  after
+    refresh
+    toast "Task archived."

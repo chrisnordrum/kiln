@@ -1,0 +1,14 @@
+# detail page lists tasks
+
+## /projects/1
+
+page title="Site"
+  head 2 "Tasks"
+  row gap=2
+    check do=toggle_task(done=$value, id=1) value=false
+    text "Ship it"
+    button "Archive" do=archive_task(id=1) style=quiet
+    button "Delete" do=delete_task(id=1) confirm="Delete task?" style=quiet
+  form do=add_task(project="1")
+    input title text required label="New task" max=200
+    submit "Add task"

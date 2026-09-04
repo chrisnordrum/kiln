@@ -1,0 +1,8 @@
+action delete_task
+  in
+    id ref Task
+  allow session.user == Task[id].project.owner
+  do
+    del Task[id]
+  after
+    refresh

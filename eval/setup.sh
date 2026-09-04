@@ -10,11 +10,22 @@ set -e
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 DEST=${1:-$HOME/Developer/kiln-eval}
 TASK=${2:-1}
+REPLACE=${REPLACE:-0}
 
 # Never destroy a previous run. The first run of this script deleted a
 # completed task's work with no recovery path, because the clean room is not a
 # git repo. Archive instead, and let the operator delete deliberately.
+# Archiving is safe for data but not for an open session: moving the directory
+# out from under a shell that is already cd'd into it silently relocates that
+# session's work, which is how a completed task-2 run ended up in an archive
+# while a pristine copy sat at the expected path. Require the intent to be
+# explicit, so a reflexive setup cannot move a live directory.
 if [ -d "$DEST" ]; then
+  if [ "$REPLACE" != "1" ]; then
+    echo "$DEST already exists." >&2
+    echo "Close any session working there, then re-run with REPLACE=1 to archive it." >&2
+    exit 1
+  fi
   ARCHIVE="$DEST.$(date +%Y%m%d-%H%M%S)"
   mv "$DEST" "$ARCHIVE"
   echo "previous run archived to $ARCHIVE"

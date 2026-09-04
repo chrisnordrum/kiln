@@ -8,9 +8,11 @@ Kiln write correct Kiln from the reference alone?**
 
 Run each task in its own new session, so nothing carries over. Before each:
 
-    sh ~/Developer/kiln/eval/setup.sh ~/Developer/kiln-eval <task-number>
+    REPLACE=1 sh ~/Developer/kiln/eval/setup.sh ~/Developer/kiln-eval <task-number>
 
-(the full path matters — the clean room has no copy of this script in it)
+(the full path matters — the clean room has no copy of this script in it.
+Close any session working there first: the reset moves that directory, and a
+shell already inside it will keep writing to the moved copy.)
 
 then open the session in `~/Developer/kiln-eval` — never in this repo. A session
 with access to `internal/` will infer the language from the compiler rather than

@@ -5,7 +5,7 @@ Kiln at commit: 71fb58b (harness at 8a1d4c6)
 | Task | Outcome | Cycles | Read beyond docs/map | What went wrong |
 |------|---------|--------|----------------------|-----------------|
 | 1 field + view | **Weak** | 3 | not recorded | param `?`, no truthiness, depth cap |
-| 2 action + control | | | | |
+| 2 action + control | **Pass** (cycles unverified) | ? | 1 file + 2 searches | nothing wrong |
 | 3 new route | | | | |
 | 4 repair | **Clean** | 0 | docs, map, app only | nothing |
 
@@ -60,6 +60,46 @@ right, but the collapsed message has to carry the scope — "route
 project_detail does not guard session.user, which 3 bound actions require" —
 rather than silently dropping two of them.
 
+## Task 2 — an action with a permission rule
+
+Verified independently: canonical, `check` clean, 4 tests passing, snapshots
+matching. Kept at `eval/results/task2-app/`.
+
+The implementation is correct and the choices are the right ones:
+
+    archived bool = false                                    # schema
+    where project == params.id and archived == false         # query, not view
+    allow session.user == Task[id].project.owner             # mirrors delete_task
+
+**My pre-registered prediction was wrong.** I predicted K053 would bite — that
+a new non-nullable `archived bool` would break `add_task` in a different file,
+exercising the cross-file consequence React cannot catch. The session added
+`archived bool = false` with a default, so `add_task` needed no change at all
+and K053 never fired. The situation I wanted to observe was avoided rather than
+survived. Recording it as a miss: the schema's default mechanism steered the
+session right without a diagnostic being needed, which is prevention rather
+than detection, and I did not anticipate it.
+
+The second prediction held: it filtered in the query rather than wrapping the
+view in a `when`. The view version would also have passed `check` and `test`.
+
+**A new language gap, found by the session:** there is no negative text
+assertion. `expect text "..."` exists; nothing expresses "this must not
+render". Wanting to assert that an archived task is absent, it fell back on the
+snapshot.
+
+That is the **second independent time** a snapshot covered a hole the type and
+test systems leave open — task 4 used it to disambiguate repairs the checker
+accepts several answers for, task 2 to assert absence. Two sessions, two
+different holes, the same fallback. The signal cuts both ways: the verification
+channel is load-bearing in ways it was not designed for, and the primitives it
+is standing in for are genuinely missing.
+
+**Evidence gap:** the transcript was truncated before the end, so the check-fix
+cycle count is unknown and the Pass is provisional. Files opened were captured
+this time — one file and two searches, which is the first real evidence for the
+"one screen, one read" claim.
+
 ## Backlog
 
 ### Language
@@ -104,3 +144,11 @@ to a timestamped directory instead.
 **H2 — fixed.** The reset instruction was written relative to the repo, which
 invites running it from the clean room where it does not exist. It now gives
 the full path.
+
+**H3 — fixed.** Archiving protects data but not an open session: moving the
+directory out from under a shell already inside it silently relocates that
+session's work. A completed task-2 run landed in an archive while a pristine
+copy sat at the expected path. The reset now refuses unless `REPLACE=1` is
+set, so a reflexive setup cannot move a live directory. The deeper fix is
+behavioural — do not run the reset proactively; the operator runs it when no
+session is open.
