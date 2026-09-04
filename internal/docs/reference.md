@@ -141,11 +141,12 @@ Route tests: `visit /projects/1` then `expect text "Tasks"`.
     kiln fmt            rewrite to canonical form
     kiln map            whole-app outline: routes, tables, actions, relations
     kiln where <sym>    every definition and use of a symbol
-    kiln snap [route]   render route to stable text; --check diffs snapshots
+    kiln snap           render every route a test visits, as stable text;
+                        --check diffs the committed snapshots
     kiln test           run tests/
     kiln dev            dev server
     kiln new route|table|action <name>
-    kiln docs [--section syntax|expr|stdlib|schema|actions|routes|view|tests|cli]
+    kiln docs [--section <name>]
     kiln explain K021   what an error code means and how to fix it
 
 ## §checked
