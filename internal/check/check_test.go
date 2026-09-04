@@ -617,3 +617,58 @@ test "ordering"
 		t.Errorf("seeding an at field from a date string should check clean, got %v", got)
 	}
 }
+
+// A schema field could be nullable while the parameter feeding it could not,
+// so an empty form field stored "" and every reader had to handle two empties.
+func TestNullableParameters(t *testing.T) {
+	nullable := `
+action note
+  in
+    id ref Task
+    body text? max 200
+  allow true
+  do
+    set Task[id].title = coalesce(body, "none")
+
+route r
+  path /r
+  view
+    page
+      button "Note" do=note id=1 body=null`
+	if got := codes(t, nullable); len(got) > 0 {
+		t.Errorf("null should be passable to a nullable parameter, got %v", got)
+	}
+
+	// Without the marker, null is refused and the message says how to allow it.
+	strict := strings.Replace(nullable, "body text? max 200", "body text max 200", 1)
+	found := false
+	for _, g := range run(t, strict) {
+		if g.Code != "K030" {
+			continue
+		}
+		found = true
+		if !strings.Contains(g.Fix, "body text?") {
+			t.Errorf("the fix should name the marker, got %q", g.Fix)
+		}
+	}
+	if !found {
+		t.Errorf("passing null to a non-nullable parameter should be K030, got %v", codes(t, strict))
+	}
+}
+
+func TestNullableParameterSurvivesFormatting(t *testing.T) {
+	src := "action a\n  in\n    body text? max 200\n  allow true\n  do\n    toast \"x\"\n"
+	var d diag.List
+	p := parse.Program([]parse.File{{Path: "t.kiln", Src: src}}, &d)
+	if !d.Empty() {
+		shown, _ := d.Resolved()
+		t.Fatalf("did not parse: %+v", shown)
+	}
+	param := p.Actions[0].In[0]
+	if !param.Nullable {
+		t.Error("the ? was lost in parsing")
+	}
+	if param.Max != 200 {
+		t.Errorf("max = %d, want 200", param.Max)
+	}
+}

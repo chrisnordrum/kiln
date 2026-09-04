@@ -164,6 +164,13 @@ func coerceArgs(a *ast.Action, in map[string]any) (map[string]eval.Value, error)
 		if !ok {
 			return nil, fmt.Errorf("%s needs %s", a.Name, p.Name)
 		}
+		// A browser sends an untouched field as the empty string. For a
+		// nullable parameter that means "not given", and turning it into null
+		// here is what stops "" and null both meaning empty downstream.
+		if p.Nullable && (raw == nil || raw == "") {
+			out[p.Name] = nil
+			continue
+		}
 		v, err := eval.Coerce(raw, p.Type)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %v", p.Name, err)

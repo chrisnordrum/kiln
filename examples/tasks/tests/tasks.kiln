@@ -37,3 +37,13 @@ test "another user's projects are not listed"
   visit /projects
   expect text "Mine"
   expect no text "Theirs"
+
+test "a task note renders only when it is set"
+  seed User email="a@example.com" id=1 name="A"
+  seed Project id=1 owner=1 title="Site"
+  seed Task id=1 notes="Remember this" project=1 rank=0 title="With a note"
+  seed Task id=2 project=1 rank=1 title="Bare"
+  as user=1
+  visit /projects/1
+  expect text "Remember this"
+  expect no text "null"

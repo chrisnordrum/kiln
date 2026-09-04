@@ -409,6 +409,11 @@ func (c *checker) checkActionArg(a *ast.Action, attr *ast.Attr, sc *scope) {
 	}
 	want := paramType(p)
 	got := c.typeOf(attr.Value, sc)
+	if got.Kind == Null && !p.Nullable {
+		c.errf(attr.Pos, "K030", "%s.%s is %s and cannot be null", a.Name, p.Name, want).
+			fix(sprintf("mark it nullable in the action: %s %s?", p.Name, p.Type))
+		return
+	}
 	if !comparable(want, got) {
 		c.errf(attr.Pos, "K030", "%s.%s is %s but is being passed %s", a.Name, p.Name, want, got).
 			fix("pass a value of type " + want.String())

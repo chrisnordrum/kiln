@@ -10,10 +10,14 @@ route project_detail
       when count(tasks) == 0
         empty "No tasks yet."
       each tasks as t
-        row gap=2
-          check do=toggle_task done=$value id=t.id value=t.done
-          text t.title
-          button "Delete" confirm="Delete task?" do=delete_task id=t.id style=quiet
+        col gap=0
+          row gap=2
+            check do=toggle_task done=$value id=t.id value=t.done
+            text t.title
+            button "Delete" confirm="Delete task?" do=delete_task id=t.id style=quiet
+          when t.notes != null
+            text t.notes style=quiet
       form do=add_task project=params.id
         input title text required label="New task" max=200
+        area notes label="Notes" rows=2
         submit "Add task"

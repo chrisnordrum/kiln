@@ -170,13 +170,15 @@ func (a *Action) ParamNames() []string {
 	return out
 }
 
-// Param is one typed action input. Every one is required.
+// Param is one typed action input. Every one must be supplied; a nullable one
+// may be supplied as null, which is how an empty form field arrives.
 type Param struct {
 	Pos
-	Name string
-	Type string // text, int, num, bool, at, ref
-	Ref  string // target table, when Type is ref
-	Max  int
+	Name     string
+	Type     string // text, int, num, bool, at, ref
+	Ref      string // target table, when Type is ref
+	Max      int
+	Nullable bool
 }
 
 // Route is one screen: its path, its guard, its data and its view, in one file.

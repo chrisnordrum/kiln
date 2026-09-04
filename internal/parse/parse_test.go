@@ -194,9 +194,21 @@ func TestViewTree(t *testing.T) {
 	if each.Var != "t" || each.List.String() != "tasks" {
 		t.Errorf("each = list %v as %q", each.List, each.Var)
 	}
-	row := each.Children[0]
-	if row.Kind != "row" {
-		t.Fatalf("each child = %s", row.Kind)
+	// Find the row wherever it sits, so a layout change in the example does not
+	// break a test that is about parsing.
+	var row *ast.Node
+	var find func([]*ast.Node)
+	find = func(list []*ast.Node) {
+		for _, n := range list {
+			if n.Kind == "row" && row == nil {
+				row = n
+			}
+			find(n.Children)
+		}
+	}
+	find(each.Children)
+	if row == nil {
+		t.Fatal("no row under the each")
 	}
 	check := row.Children[0]
 	do, ok := check.Attr("do")

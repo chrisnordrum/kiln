@@ -9,6 +9,7 @@ table Task
   project ref Project on delete cascade
   title text max 200
   done bool = false
+  notes text?
   rank int
   created at now
   index project, rank

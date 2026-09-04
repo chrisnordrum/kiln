@@ -60,18 +60,23 @@ func parseParam(line *lex.Line, d *diag.List) *ast.Param {
 	p := &ast.Param{Pos: pos(line), Name: line.Head()}
 	c := cur(line, d)
 	p.Type = c.next().Text
-	if p.Type == "ref" && !c.eof() {
+	if p.Type == "ref" && !c.eof() && c.peek().Kind == lex.Ident {
 		p.Ref = c.next().Text
 	}
+	p.Nullable = c.accept("?")
 	for !c.eof() {
 		if c.acceptWord("max") {
 			p.Max = intArg(c, d)
 			continue
 		}
+		if c.accept("?") {
+			p.Nullable = true
+			continue
+		}
 		tok := c.next()
 		d.Add(diag.Diag{Code: "K010", File: line.File, Line: tok.Line, Col: tok.Col,
 			Msg: sprintf("%q is not a parameter modifier", tok.Text),
-			Fix: "parameters take an optional `max N`"})
+			Fix: "parameters take `?` to allow null, and an optional `max N`"})
 	}
 	return p
 }

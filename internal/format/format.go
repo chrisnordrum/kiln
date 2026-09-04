@@ -181,6 +181,9 @@ func action(a *ast.Action) string {
 					if p.Type == "ref" {
 						parts = append(parts, p.Ref)
 					}
+					if p.Nullable {
+						parts = append(parts, "?")
+					}
 					if p.Max > 0 {
 						parts = append(parts, "max", strconv.Itoa(p.Max))
 					}

@@ -77,7 +77,9 @@ Modifiers: `?` nullable, `= v` default, `at now` defaults to insert time.
       after
         refresh
 
-`in` declares typed params; callers must supply every one.
+`in` declares typed params; callers must supply every one. `?` marks one
+nullable, which is how an empty form field arrives — without it a blank input
+stores "" and every reader has to handle both empties.
 `allow` must be true or the call is denied (enforced at the boundary).
 `do` statements: `set T[e].f = e` `set session.x = e` `new T f=e ...` `del T[e]`
               `send effect to=e ...`
