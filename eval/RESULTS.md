@@ -158,7 +158,7 @@ It took 35 shell commands, against 8 for task 4.
 
 ### Language
 
-*(L1 and the task-3 link gap are fixed; L2 remains.)*
+*(all resolved: L1 in P2, the task-3 link gap in P0, L2 in P3.)*
 
 **L1 — FIXED (P2).** Action parameters could not be nullable. A schema field takes `?`; an
 `in` parameter does not (K010: `"?" is not a parameter modifier`). So a
@@ -166,7 +166,7 @@ nullable column is fed by a non-nullable parameter, an empty textarea stores
 `""` rather than null, and every reader has to handle both. That is the whole
 reason the line above exists. The asymmetry is the defect.
 
-**L2 — the depth cap is counting the wrong thing.** An ordinary layout — a
+**L2 — FIXED (P3).** The depth cap was counting the wrong thing. An ordinary layout — a
 task row with a note beneath it — reached 7 and hit K012. The cap was already
 raised from 4 to 6 during the build for exactly this reason; hitting it twice
 is a pattern, not bad luck. `route > view > page` spends three levels on
@@ -175,16 +175,16 @@ structure before any layout begins, so the cap should count view depth from
 
 ### Diagnostics
 
-*(the task-3 silent failure is fixed as K026; D1 and D2 remain.)*
+*(all resolved: the task-3 silent failure as K026 in P0, D1 and D2 in P4.)*
 
-**D1 — K040's root key is too specific.** One deleted guard produced three
+**D1 — FIXED (P4).** K040's root key was too specific. One deleted guard produced three
 diagnostics, one per action bound from the route. The Root is
 `reach:<action>:<route>`, so the cascade machinery cannot collapse them. It
 should be `reach:<route>:<session field>`: the missing guard is the root cause,
 not each action that trips over it.
 
-**D2 — K040 offers the insecure repair as a coequal option.** Held pending
-task 4, which is the test of it.
+**D2 — FIXED (P4).** K040 offered the insecure repair as a coequal option.
+Task 4 chose correctly despite the wording; the wording was still wrong.
 
 ### Docs
 
@@ -212,3 +212,24 @@ copy sat at the expected path. The reset now refuses unless `REPLACE=1` is
 set, so a reflexive setup cannot move a live directory. The deeper fix is
 behavioural — do not run the reset proactively; the operator runs it when no
 session is open.
+
+## Closing state
+
+Every item found by the four runs is fixed. The requirement task 3 could not
+meet is now in the example and covered by a test:
+
+    each projects as p
+      row gap=2
+        link p.title to="/projects/" + p.id
+
+What the experiment cost: four sessions. What it bought: one silent failure in
+the core claim, two missing test primitives, one wrong type rule, one cap
+measuring the wrong thing, and one diagnostic burying its own cause. None of it
+surfaced in four days of building the language, because the example app was too
+thin to exercise it.
+
+The rubric needs one change before a second round. It scored task 1 Weak for
+three check-fix cycles, but all three were the checker teaching the language to
+a session that then produced correct, canonical, tested code in under two
+minutes. "The checker caught it" and "the session struggled" are different
+outcomes and the bar cannot currently tell them apart.
