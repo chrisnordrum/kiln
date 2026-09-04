@@ -1,0 +1,34 @@
+test "owner toggles a task"
+  seed User email="a@example.com" id=1 name="A"
+  seed User email="b@example.com" id=2 name="B"
+  seed Project id=1 owner=1 title="Site"
+  seed Task done=false id=1 project=1 rank=0 title="Ship it"
+  as user=1
+  call toggle_task done=true id=1
+  expect Task[1].done == true
+  expect denied when as user=2
+
+test "detail page lists tasks"
+  seed User email="a@example.com" id=1 name="A"
+  seed Project id=1 owner=1 title="Site"
+  seed Task done=false id=1 project=1 rank=0 title="Ship it"
+  as user=1
+  visit /projects/1
+  expect text "Ship it"
+
+test "add task carries a note"
+  seed User email="a@example.com" id=1 name="A"
+  seed User email="b@example.com" id=2 name="B"
+  seed Project id=1 owner=1 title="Site"
+  as user=1
+  call add_task notes="ask the client first" project=1 title="Ship it"
+  expect Task[1].notes == "ask the client first"
+  expect denied when as user=2
+
+test "detail page shows a task note"
+  seed User email="a@example.com" id=1 name="A"
+  seed Project id=1 owner=1 title="Site"
+  seed Task done=false id=1 notes="ask the client first" project=1 rank=0 title="Ship it"
+  as user=1
+  visit /projects/1
+  expect text "ask the client first"

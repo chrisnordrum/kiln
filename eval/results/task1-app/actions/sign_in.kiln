@@ -1,0 +1,8 @@
+action sign_in
+  in
+    email text max 200
+  allow true
+  do
+    set session.user = User[1]
+  after
+    goto /projects/1

@@ -11,7 +11,14 @@ REPO=$(cd "$(dirname "$0")/.." && pwd)
 DEST=${1:-$HOME/Developer/kiln-eval}
 TASK=${2:-1}
 
-rm -rf "$DEST"
+# Never destroy a previous run. The first run of this script deleted a
+# completed task's work with no recovery path, because the clean room is not a
+# git repo. Archive instead, and let the operator delete deliberately.
+if [ -d "$DEST" ]; then
+  ARCHIVE="$DEST.$(date +%Y%m%d-%H%M%S)"
+  mv "$DEST" "$ARCHIVE"
+  echo "previous run archived to $ARCHIVE"
+fi
 mkdir -p "$DEST"
 
 ( cd "$REPO" && go build -o "$DEST/kiln" ./cmd/kiln )
