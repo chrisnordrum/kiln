@@ -7,7 +7,7 @@ Kiln at commit: 71fb58b (harness at 8a1d4c6)
 | 1 field + view | **Weak** | 3 | not recorded | param `?`, no truthiness, depth cap |
 | 2 action + control | | | | |
 | 3 new route | | | | |
-| 4 repair | | | | |
+| 4 repair | **Clean** | 0 | docs, map, app only | nothing |
 
 ## Task 1 — a field, surfaced
 
@@ -30,6 +30,35 @@ the rubric for later runs; do not move this score.
 
 Not recorded this run: which files it opened. That is half of what the "one
 screen, one read" claim needs, so record it from task 2 on.
+
+## Task 4 — repair
+
+Verified independently: the repaired app is **byte-identical to the pristine
+original**. All four defects fixed, no collateral changes, canonical form
+intact. Zero check-fix cycles.
+
+**The snapshot turned out to be a specification, not just a regression check.**
+Two of the four defects were underdetermined by the checker alone — K031 admits
+`done=$value`, `done=true` or `done=t.done`, and K024 admits any of six style
+tokens. All of those pass `check`. The committed snapshot pinned both, because
+it records `check do=toggle_task(done=$value, id=1)` and `style=quiet`. That
+benefit was not designed for: snapshots were built as a regression channel and
+are also acting as an executable spec for anything the type system leaves open.
+It is the most valuable result of the run.
+
+**D2 did not fire.** The session added the guard rather than widening the allow
+rule. That is one favourable data point, not a clearance: three K040s all named
+the same missing guard, and the snapshot showed the app as it ought to look.
+The wording defect stands on its own terms — two repairs with different
+security consequences are still presented as coequal alternatives, and the
+session got it right despite the message rather than because of it. Downgraded
+in urgency, not resolved.
+
+**D1 needs a refinement.** The triplicate K040 helped here: three diagnostics
+naming one missing guard made the root cause obvious. Collapsing them is still
+right, but the collapsed message has to carry the scope — "route
+project_detail does not guard session.user, which 3 bound actions require" —
+rather than silently dropping two of them.
 
 ## Backlog
 
