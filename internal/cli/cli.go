@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"kiln/internal/diag"
 	"kiln/internal/docs"
 )
 
@@ -28,7 +29,7 @@ var commands = map[string]*Command{
 	"docs":    {Name: "docs", Blurb: "print the language reference", Phase: 1, Run: runDocs},
 	"fmt":     {Name: "fmt", Blurb: "rewrite to canonical form", Phase: 2},
 	"check":   {Name: "check", Blurb: "verify the whole program", Phase: 3},
-	"explain": {Name: "explain", Blurb: "what an error code means", Phase: 3},
+	"explain": {Name: "explain", Blurb: "what an error code means", Phase: 3, Run: runExplain},
 	"map":     {Name: "map", Blurb: "whole-app outline", Phase: 6},
 	"where":   {Name: "where", Blurb: "find a symbol's definition and uses", Phase: 6},
 	"snap":    {Name: "snap", Blurb: "render a route to stable text", Phase: 4},
@@ -104,5 +105,22 @@ func runDocs(args []string, out, errw io.Writer) error {
 		return err
 	}
 	fmt.Fprintln(out, body)
+	return nil
+}
+
+func runExplain(args []string, out, errw io.Writer) error {
+	if len(args) != 1 {
+		return fmt.Errorf("usage: kiln explain <code>\ncodes: %s", strings.Join(diag.Codes(), " "))
+	}
+	code := strings.ToUpper(args[0])
+	text, ok := diag.Lookup(code)
+	if !ok {
+		near := diag.Suggest(code, diag.Codes())
+		if len(near) > 0 {
+			return fmt.Errorf("no code %s; did you mean %s", code, strings.Join(near, ", "))
+		}
+		return fmt.Errorf("no code %s\ncodes: %s", code, strings.Join(diag.Codes(), " "))
+	}
+	fmt.Fprintf(out, "%s\n\n%s\n", code, text)
 	return nil
 }

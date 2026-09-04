@@ -8,7 +8,7 @@ named server action -> mutation -> re-query -> patch.
 
 2-space indent, no tabs. Blocks are indentation. `#` starts a comment.
 Tables are `PascalCase`; routes, actions, fields are `snake_case`.
-Max nesting depth 4, max 120 lines per file (enforced).
+Max nesting depth 6, max 120 lines per file (enforced).
 
 ## §expr
 
