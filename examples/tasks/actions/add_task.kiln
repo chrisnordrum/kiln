@@ -1,0 +1,9 @@
+action add_task
+  in
+    project ref Project
+    title   text max 200
+  allow session.user == Project[project].owner
+  do
+    new Task project=project title=title rank=0 done=false
+  after
+    refresh

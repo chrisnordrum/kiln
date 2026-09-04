@@ -1,0 +1,12 @@
+# build output
+/kiln
+/dist/
+
+# runtime state
+*.db
+*.db-journal
+*.db-wal
+.kiln/
+
+# macOS
+.DS_Store

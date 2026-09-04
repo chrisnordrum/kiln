@@ -1,0 +1,9 @@
+action toggle_task
+  in
+    id    ref Task
+    done  bool
+  allow session.user == Task[id].project.owner
+  do
+    set Task[id].done = done
+  after
+    refresh

@@ -1,0 +1,21 @@
+route project_detail
+  path /projects/:id
+  guard session.user else redirect /login
+
+  data
+    project one  Project where id == params.id
+    tasks   many Task where project == params.id order rank asc
+
+  view
+    page title=project.title
+      head 2 "Tasks"
+      when count(tasks) == 0
+        empty "No tasks yet."
+      each tasks as t
+        row gap=2
+          check value=t.done do=toggle_task id=t.id done=$value
+          text t.title
+          button "Delete" style=quiet do=delete_task id=t.id confirm="Delete task?"
+      form do=add_task project=params.id
+        input title text required max=200 label="New task"
+        submit "Add task"

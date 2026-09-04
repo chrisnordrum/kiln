@@ -1,0 +1,14 @@
+table Project
+  id      id
+  owner   ref User on delete cascade
+  title   text max 200
+  created at now
+
+table Task
+  id      id
+  project ref Project on delete cascade
+  title   text max 200
+  done    bool = false
+  rank    int
+  created at now
+  index project, rank
