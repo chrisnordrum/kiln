@@ -1,0 +1,3 @@
+app tasks
+  title "Tasks"
+  session user ref User

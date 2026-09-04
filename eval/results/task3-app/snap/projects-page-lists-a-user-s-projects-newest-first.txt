@@ -1,0 +1,8 @@
+# projects page lists a user's projects newest first
+
+## /projects
+
+page title="Projects"
+  head 1 "Projects"
+  text "Newer site"
+  text "Older site"

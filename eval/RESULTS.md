@@ -6,7 +6,7 @@ Kiln at commit: 71fb58b (harness at 8a1d4c6)
 |------|---------|--------|----------------------|-----------------|
 | 1 field + view | **Weak** | 3 | not recorded | param `?`, no truthiness, depth cap |
 | 2 action + control | **Pass** (cycles unverified) | ? | 1 file + 2 searches | nothing wrong |
-| 3 new route | | | | |
+| 3 new route | **Fail** | 35 shell cmds | **read the compiler** | the language cannot link to a record |
 | 4 repair | **Clean** | 0 | docs, map, app only | nothing |
 
 ## Task 1 — a field, surfaced
@@ -99,6 +99,60 @@ is standing in for are genuinely missing.
 cycle count is unknown and the Pass is provisional. Files opened were captured
 this time — one file and two searches, which is the first real evidence for the
 "one screen, one read" claim.
+
+## Task 3 — a new route
+
+**Fail**, and the failure is the language's, not the session's. The route,
+guard, scoping, ordering, index and tests are all correct and land clean. The
+requirement it could not meet is "show each project's title as a link to that
+project", because **Kiln cannot express a link to a specific record**.
+
+The session was right to escalate rather than ship it. Every claim verified
+independently:
+
+    link p.title to="/projects/p.id"     → check: ok, renders the literal
+    "/projects/" + p.id                  → K030: cannot apply + to path and id
+    "/projects/" + p.title               → check: ok
+
+The rendered snapshot for two different projects:
+
+    link "Site"  to="/projects/p.id"
+    link "Other" to="/projects/p.id"
+
+`kiln check` is green on a page where every link 404s. That is precisely the
+failure mode this language exists to prevent, and it is the most serious
+finding of the four runs.
+
+Three defects are stacked here:
+
+**R1 — the Path type is over-eager.** Any string literal starting with `/` is
+typed Path. That was to enable link validation, and it poisons concatenation:
+Path + ID is neither Text nor numeric, so it errors. Building a URL from a
+title works; building one from an id does not.
+
+**R2 — checkPath matches a literal against the wildcard.**
+`pathMatches("/projects/:id", "/projects/p.id")` is true, because the pattern
+segment is a wildcard that accepts any text. So the broken literal validates.
+This is the silent failure itself.
+
+**R3 — there is no interpolation and no id-to-text builtin,** so the thing
+cannot be expressed at all.
+
+A fourth, smaller: K030's fix line here reads "arithmetic needs numbers" for
+what is plainly string concatenation. That sends a reader the wrong way.
+
+**A second gap the session found: a guard redirect cannot be tested.** `visit`
+fails when the guard redirects, and `expect` has no form for it, so guard
+behaviour is statically proven by K040 and completely uncovered by tests.
+
+**Rubric violation, reported by the session:** it read the compiler at
+`~/Developer/kiln` because the reference does not say either way. That alone
+scores Weak. The deeper problem is that the clean room was isolated by
+convention rather than enforcement — under a skill-based deployment the
+compiler would not be there, and the run would have shipped the broken literal
+link with a green check.
+
+It took 35 shell commands, against 8 for task 4.
 
 ## Backlog
 
