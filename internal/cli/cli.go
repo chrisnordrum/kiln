@@ -27,7 +27,7 @@ type Command struct {
 
 var commands = map[string]*Command{
 	"docs":    {Name: "docs", Blurb: "print the language reference", Phase: 1, Run: runDocs},
-	"fmt":     {Name: "fmt", Blurb: "rewrite to canonical form", Phase: 2},
+	"fmt":     {Name: "fmt", Blurb: "rewrite to canonical form", Phase: 2, Run: runFmt},
 	"check":   {Name: "check", Blurb: "verify the whole program", Phase: 3},
 	"explain": {Name: "explain", Blurb: "what an error code means", Phase: 3, Run: runExplain},
 	"map":     {Name: "map", Blurb: "whole-app outline", Phase: 6},

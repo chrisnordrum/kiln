@@ -1,5 +1,5 @@
 table User
-  id      id
-  email   text max 200 unique
-  name    text max 80
+  id id
+  email text max 200 unique
+  name text max 80
   created at now

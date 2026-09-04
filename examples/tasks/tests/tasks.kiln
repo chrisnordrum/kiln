@@ -1,17 +1,17 @@
 test "owner toggles a task"
-  seed User id=1 email="a@example.com" name="A"
-  seed User id=2 email="b@example.com" name="B"
+  seed User email="a@example.com" id=1 name="A"
+  seed User email="b@example.com" id=2 name="B"
   seed Project id=1 owner=1 title="Site"
-  seed Task id=1 project=1 title="Ship it" done=false rank=0
+  seed Task done=false id=1 project=1 rank=0 title="Ship it"
   as user=1
-  call toggle_task id=1 done=true
+  call toggle_task done=true id=1
   expect Task[1].done == true
   expect denied when as user=2
 
 test "detail page lists tasks"
-  seed User id=1 email="a@example.com" name="A"
+  seed User email="a@example.com" id=1 name="A"
   seed Project id=1 owner=1 title="Site"
-  seed Task id=1 project=1 title="Ship it" done=false rank=0
+  seed Task done=false id=1 project=1 rank=0 title="Ship it"
   as user=1
   visit /projects/1
   expect text "Ship it"

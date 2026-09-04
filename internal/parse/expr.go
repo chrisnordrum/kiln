@@ -21,6 +21,15 @@ var binPrec = map[string]int{
 // so `not a == b` reads as `not (a == b)`.
 const notPrec = 3
 
+// Precedence reports an infix operator's binding power, for the formatter.
+func Precedence(op string) (int, bool) {
+	p, ok := binPrec[op]
+	return p, ok
+}
+
+// NotPrecedence is where a `not` operand binds.
+const NotPrecedence = notPrec
+
 // cursor walks one line's tokens.
 type cursor struct {
 	toks []lex.Token
