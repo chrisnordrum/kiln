@@ -34,7 +34,7 @@ var commands = map[string]*Command{
 	"where":   {Name: "where", Blurb: "find a symbol's definition and uses", Phase: 6, Run: runWhere},
 	"snap":    {Name: "snap", Blurb: "render a route to stable text", Phase: 4, Run: runSnap},
 	"test":    {Name: "test", Blurb: "run tests/", Phase: 5, Run: runTest},
-	"dev":     {Name: "dev", Blurb: "dev server", Phase: 5},
+	"dev":     {Name: "dev", Blurb: "dev server", Phase: 5, Run: runDev},
 	"new":     {Name: "new", Blurb: "scaffold a route, table or action", Phase: 6, Run: runNew},
 }
 

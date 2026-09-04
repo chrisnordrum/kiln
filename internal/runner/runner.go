@@ -113,7 +113,7 @@ type Page struct {
 // Visit resolves a path to a route, applies its guard, runs its data block and
 // renders it.
 func (r *Runner) Visit(path string) (*Page, error) {
-	route, params, ok := r.match(path)
+	route, params, ok := r.Match(path)
 	if !ok {
 		return nil, fmt.Errorf("no route serves %s", path)
 	}
@@ -127,8 +127,8 @@ func (r *Runner) Visit(path string) (*Page, error) {
 	return &Page{Route: route, Text: render.Text(r.E, route, bound)}, nil
 }
 
-// match finds the route serving a concrete path and extracts its parameters.
-func (r *Runner) match(path string) (*ast.Route, map[string]eval.Value, bool) {
+// Match finds the route serving a concrete path and extracts its parameters.
+func (r *Runner) Match(path string) (*ast.Route, map[string]eval.Value, bool) {
 	for _, route := range r.P.Routes {
 		if route.Path == path {
 			return route, map[string]eval.Value{}, true
@@ -157,6 +157,22 @@ func (r *Runner) match(path string) (*ast.Route, map[string]eval.Value, bool) {
 		}
 	}
 	return nil, nil, false
+}
+
+// Params extracts a known route's path parameters from a concrete path.
+func (r *Runner) Params(route *ast.Route, path string) map[string]eval.Value {
+	want := strings.Split(path, "/")
+	got := strings.Split(route.Path, "/")
+	params := map[string]eval.Value{}
+	if len(got) != len(want) {
+		return params
+	}
+	for i := range got {
+		if strings.HasPrefix(got[i], ":") {
+			params[got[i][1:]] = want[i]
+		}
+	}
+	return params
 }
 
 // Eval exposes expression evaluation for test expectations.

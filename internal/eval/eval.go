@@ -100,6 +100,10 @@ func (e *Evaluator) Eval(x ast.Expr, env *Env) Value {
 	return nil
 }
 
+// LitValue converts a literal to a runtime value, for callers that need one
+// without a whole evaluator.
+func LitValue(n *ast.Lit) Value { return litValue(n) }
+
 func litValue(n *ast.Lit) Value {
 	switch n.Kind {
 	case "string":
