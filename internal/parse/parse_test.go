@@ -55,14 +55,20 @@ func TestExampleParsesClean(t *testing.T) {
 	if got := len(p.Tables); got != 3 {
 		t.Errorf("want 3 tables (User, Project, Task), got %d", got)
 	}
-	if got := len(p.Actions); got != 4 {
-		t.Errorf("want 4 actions, got %d", got)
+	for _, name := range []string{"toggle_task", "add_task", "delete_task", "sign_in"} {
+		if _, ok := p.Action(name); !ok {
+			t.Errorf("no action named %s", name)
+		}
 	}
-	if got := len(p.Routes); got != 2 {
-		t.Errorf("want 2 routes, got %d", got)
+	// Assert on names rather than counts, so growing the example does not break
+	// tests that are not about the example's size.
+	for _, name := range []string{"project_detail", "login", "project_list"} {
+		if _, ok := p.Route(name); !ok {
+			t.Errorf("no route named %s", name)
+		}
 	}
-	if got := len(p.Tests); got != 2 {
-		t.Errorf("want 2 tests, got %d", got)
+	if len(p.Tests) == 0 {
+		t.Error("the example declares no tests")
 	}
 }
 

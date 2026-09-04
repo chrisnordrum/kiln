@@ -1,0 +1,13 @@
+route project_list
+  path /projects
+  guard session.user else redirect /login
+  data
+    projects many Project where owner == session.user order created desc
+  view
+    page title="Projects"
+      head 1 "Projects"
+      when count(projects) == 0
+        empty "No projects yet."
+      each projects as p
+        row gap=2
+          link p.title to="/projects/" + p.id

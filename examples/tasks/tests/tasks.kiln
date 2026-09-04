@@ -15,3 +15,11 @@ test "detail page lists tasks"
   as user=1
   visit /projects/1
   expect text "Ship it"
+
+test "project list links to each project"
+  seed User email="a@example.com" id=1 name="A"
+  seed Project created="2026-01-01" id=1 owner=1 title="Older site"
+  seed Project created="2026-06-01" id=2 owner=1 title="Newer site"
+  as user=1
+  visit /projects
+  expect text "Newer site"

@@ -45,6 +45,20 @@ func (r *Runner) Seed(table string, fields map[string]eval.Value) error {
 	return err
 }
 
+// FieldType reports a column's declared type, so a caller can coerce a value
+// into it.
+func (r *Runner) FieldType(table, field string) (string, bool) {
+	t, ok := r.P.Table(table)
+	if !ok {
+		return "", false
+	}
+	f, ok := t.Field(field)
+	if !ok {
+		return "", false
+	}
+	return f.Type, true
+}
+
 // SignIn adopts a session identity: `as user=1`.
 func (r *Runner) SignIn(name string, v eval.Value) { r.Session[name] = v }
 

@@ -44,7 +44,15 @@ func RunTest(p *ast.Program, t *ast.Test) Result {
 		case "seed":
 			fields := map[string]eval.Value{}
 			for _, a := range s.Attrs {
-				fields[a.Name] = run.Eval(a.Value)
+				v := run.Eval(a.Value)
+				// A fixture is source text, so it goes through the same
+				// coercion as a form field rather than being trusted raw.
+				if kind, ok := run.FieldType(s.Target, a.Name); ok {
+					if coerced, err := eval.Coerce(v, kind); err == nil {
+						v = coerced
+					}
+				}
+				fields[a.Name] = v
 			}
 			if err := run.Seed(s.Target, fields); err != nil {
 				fail(s.Pos, "seed %s: %v", s.Target, err)

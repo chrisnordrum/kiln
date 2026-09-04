@@ -272,14 +272,20 @@ func (c *checker) checkBinary(x *ast.Binary, sc *scope) Type {
 		return tBool
 
 	case "+":
-		if l.Kind == Text || r.Kind == Text {
+		// A path is text that happens to name a route, so joining one to an id
+		// builds a URL. Refusing that made it impossible to link to a record,
+		// which is the most ordinary thing a web page does.
+		if isTextual(l) || isTextual(r) {
 			return tText
 		}
 		fallthrough
 	default:
 		if l.Kind != Unknown && !l.numeric() || r.Kind != Unknown && !r.numeric() {
-			c.errf(x.Pos, "K030", "cannot apply %s to %s and %s", x.Op, l, r).
-				fix("arithmetic needs numbers")
+			fix := "arithmetic needs numbers"
+			if x.Op == "+" {
+				fix = "+ joins text or adds numbers, and neither side here is either"
+			}
+			c.errf(x.Pos, "K030", "cannot apply %s to %s and %s", x.Op, l, r).fix(fix)
 			return tUnknown
 		}
 		if l.Kind == Num || r.Kind == Num {
@@ -287,6 +293,12 @@ func (c *checker) checkBinary(x *ast.Binary, sc *scope) Type {
 		}
 		return tInt
 	}
+}
+
+// isTextual reports whether a value concatenates as text. An enum is its own
+// name and a path is a URL, so both join like text.
+func isTextual(t Type) bool {
+	return t.Kind == Text || t.Kind == Path || t.Kind == Enum
 }
 
 func orderable(t Type) bool { return t.Kind == Unknown || t.numeric() || t.Kind == At }

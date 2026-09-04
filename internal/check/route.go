@@ -87,6 +87,35 @@ func (c *checker) checkQuery(q *ast.Query, sc *scope) {
 	}
 }
 
+// checkLiteralPath verifies a quoted path, and first catches the mistake that
+// quoting invites: writing a field reference inside the quotes.
+//
+// A quoted path is used exactly as written, so "/projects/p.id" renders the
+// same dead link on every row — and it passes route resolution, because the
+// :id segment is a wildcard that accepts any text. That combination is a
+// silent failure, which is the one thing this language exists to prevent.
+//
+// The scope is what makes the check precise: "p" in "/projects/p.id" is a
+// bound variable, while "robots" in "/robots.txt" is not, so a real filename
+// is never mistaken for a botched interpolation.
+func (c *checker) checkLiteralPath(path string, sc *scope, pos ast.Pos) {
+	for _, seg := range strings.Split(path, "/") {
+		dot := strings.IndexByte(seg, '.')
+		if dot <= 0 {
+			continue
+		}
+		head := seg[:dot]
+		_, bound := sc.vars[head]
+		if !bound && head != "params" && head != "session" {
+			continue
+		}
+		c.errf(pos, "K026", "%q inside a quoted path is text, not a value", seg).
+			fix(sprintf("build the path instead: to=%q + %s", path[:strings.Index(path, seg)], seg))
+		return
+	}
+	c.checkPath(path, pos)
+}
+
 // checkPath verifies a static path resolves to a declared route.
 func (c *checker) checkPath(path string, pos ast.Pos) {
 	if path == "" {
@@ -397,8 +426,8 @@ func (c *checker) checkCommonAttr(n *ast.Node, a *ast.Attr, sc *scope) {
 	case "cols", "rows":
 		c.want(c.typeOf(a.Value, sc), Int, a.Pos, a.Name)
 	case "to":
-		if lit, ok := a.Value.(*ast.Lit); ok && (lit.Kind == "string") {
-			c.checkPath(lit.Text, a.Pos)
+		if lit, ok := a.Value.(*ast.Lit); ok && lit.Kind == "string" {
+			c.checkLiteralPath(lit.Text, sc, a.Pos)
 		} else {
 			c.typeOf(a.Value, sc)
 		}

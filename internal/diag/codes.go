@@ -21,6 +21,7 @@ var explain = map[string]string{
 	"K023": "This link points at a path no route declares. Every internal link resolves\nat check time, so a dead link is a build error rather than a 404.",
 	"K024": "Style values come from a closed set. There is no CSS and no class names, so\na token that is not in the set is always a mistake.",
 	"K025": "No stdlib function by this name. Kiln has no user-defined functions; see\n`kiln docs --section stdlib` for the whole list.",
+	"K026": "A quoted path is used exactly as written, so a field reference inside the\nquotes renders the same link on every row — and it still resolves, because a\n:segment in a route accepts any text. Build the path with + instead.",
 	"K030": "This expression has the wrong type for where it is used.",
 	"K031": "The action declares this parameter in its `in` block but the caller does not\nsupply it. Every parameter is required.",
 	"K032": "This argument is not declared in the action's `in` block. Add it there or\nremove it here.",

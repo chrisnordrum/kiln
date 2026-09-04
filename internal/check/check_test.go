@@ -527,3 +527,93 @@ func TestEveryDiagnosticIsWellFormed(t *testing.T) {
 		}
 	}
 }
+
+// A link to a record is the most ordinary thing a web page does. It has to be
+// expressible, and the way it is spelled wrong has to be caught — the version
+// in quotes renders the same dead link on every row and used to pass.
+func TestRecordLinks(t *testing.T) {
+	route := func(to string) string {
+		return `
+route listing
+  path /listing
+  data
+    tasks many Task where rank >= 0
+  view
+    page
+      each tasks as t
+        link t.title to=` + to + `
+
+route detail
+  path /d/:id
+  view
+    page
+      head 1 "Detail"
+`
+	}
+
+	if got := codes(t, route(`"/d/" + t.id`)); len(got) > 0 {
+		t.Errorf("building a path by concatenation should check clean, got %v", got)
+	}
+	if got := codes(t, route(`"/d/" + t.title`)); len(got) > 0 {
+		t.Errorf("concatenating text should check clean, got %v", got)
+	}
+	if got := codes(t, route(`"/d/t.id"`)); !hasCode(got, "K026") {
+		t.Errorf("a field reference inside a quoted path should be K026, got %v", got)
+	}
+	// A real filename is not a botched interpolation: the difference is whether
+	// the part before the dot is bound in scope.
+	if got := codes(t, route(`"/robots.txt"`)); hasCode(got, "K026") {
+		t.Errorf("/robots.txt is not an interpolation, got %v", got)
+	}
+	// Dead links are still caught, and concrete paths still resolve.
+	if got := codes(t, route(`"/nowhere"`)); !hasCode(got, "K023") {
+		t.Errorf("a dead link should still be K023, got %v", got)
+	}
+	if got := codes(t, route(`"/d/1"`)); len(got) > 0 {
+		t.Errorf("a concrete path should resolve, got %v", got)
+	}
+}
+
+// The K026 message has to name the repair, since the whole problem is that the
+// broken form looks right.
+func TestK026NamesTheRepair(t *testing.T) {
+	src := `
+route listing
+  path /listing
+  data
+    tasks many Task where rank >= 0
+  view
+    page
+      each tasks as t
+        link t.title to="/d/t.id"
+
+route detail
+  path /d/:id
+  view
+    page
+      head 1 "Detail"
+`
+	for _, g := range run(t, src) {
+		if g.Code != "K026" {
+			continue
+		}
+		if !strings.Contains(g.Fix, `"/d/" + t.id`) {
+			t.Errorf("the fix should spell out the concatenation, got %q", g.Fix)
+		}
+		return
+	}
+	t.Fatal("no K026 reported")
+}
+
+// A timestamp has no literal form, so a fixture spells one as text. Without
+// that, no time-ordered query could be tested.
+func TestTimestampsCanBeSeededAsText(t *testing.T) {
+	src := `
+test "ordering"
+  seed Task id=1 title="a" rank=0 created="2026-01-01"
+  expect Task[1].title == "a"
+`
+	if got := codes(t, src); len(got) > 0 {
+		t.Errorf("seeding an at field from a date string should check clean, got %v", got)
+	}
+}

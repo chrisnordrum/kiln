@@ -131,6 +131,12 @@ func comparable(a, b Type) bool {
 	if a.Kind == Path && b.Kind == Text || a.Kind == Text && b.Kind == Path {
 		return true
 	}
+	// A timestamp has no literal form, so a fixture spells one as text. Without
+	// this, no test could seed a distinct `at` value and every time-ordered
+	// query would be untestable.
+	if a.Kind == At && b.Kind == Text || a.Kind == Text && b.Kind == At {
+		return true
+	}
 	return a.Kind == b.Kind
 }
 

@@ -14,7 +14,8 @@ Max nesting depth 6, max 120 lines per file (enforced).
 
 Literals: `"text"` `123` `1.5` `true` `false` `null`
 Refs: `params.id` `session.user` `Task[expr].field` `t.field` (loop var)
-Ops: `== != < <= > >= and or not + - * / %` (`+` also joins text)
+Ops: `== != < <= > >= and or not + - * / %` (`+` joins text, and a path
+     joins with anything to build a URL)
 Conditional: `if cond then a else b`
 Calls: `fn(a, b)` — stdlib only. No loops, no recursion, no user functions.
 Every expression provably terminates.
@@ -113,6 +114,9 @@ Layout:  `page title=e` `col` `row` `grid cols=n` `card` `sep`
 Content: `head 1..4 "text"` `text e` `rich e` `img src=e alt=e` `badge e` `empty "msg"`
 Control: `each <list> as <v>` `when <expr>` + `else`
 Action:  `link "label" to=/path` `button "label" do=action arg=e [confirm="msg"]`
+         `to=` takes an expression. Link to a record by building the path:
+         `to="/projects/" + p.id`. A field name inside quotes is text, not a
+         value, so `to="/projects/p.id"` is the same dead link on every row.
          `check value=e do=action ...` `form do=action arg=e`
          `input name type [required] [max=n] [label="..."]` `select name from=list`
          `area name [rows=n]` `submit "label"`

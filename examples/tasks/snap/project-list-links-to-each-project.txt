@@ -1,0 +1,10 @@
+# project list links to each project
+
+## /projects
+
+page title="Projects"
+  head 1 "Projects"
+  row gap=2
+    link "Newer site" to="/projects/2"
+  row gap=2
+    link "Older site" to="/projects/1"
