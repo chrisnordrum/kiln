@@ -215,6 +215,8 @@ func stmt(s ast.Stmt) []string {
 	switch x := s.(type) {
 	case *ast.Set:
 		return []string{"set", x.Table + "[" + Expr(x.Key) + "]." + x.Field, "=", Expr(x.Value)}
+	case *ast.SetSession:
+		return []string{"set", "session." + x.Name, "=", Expr(x.Value)}
 	case *ast.New:
 		return append([]string{"new", x.Table}, attrs(x.Fields)...)
 	case *ast.Del:

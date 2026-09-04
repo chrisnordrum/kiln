@@ -129,3 +129,18 @@ func TestEveryCodeHasExplanation(t *testing.T) {
 		}
 	}
 }
+
+// A transposition is one typo, not two, so it must stay within the threshold.
+func TestSuggestCatchesTranspositions(t *testing.T) {
+	tables := []string{"Task", "Project", "User"}
+	if got := Suggest("Tsak", tables); len(got) == 0 || got[0] != "Task" {
+		t.Errorf("want Task suggested for Tsak, got %v", got)
+	}
+	if got := Suggest("Porject", tables); len(got) == 0 || got[0] != "Project" {
+		t.Errorf("want Project suggested for Porject, got %v", got)
+	}
+	// A word that is simply different still gets no guess.
+	if got := Suggest("Invoice", tables); len(got) != 0 {
+		t.Errorf("want no suggestion for Invoice, got %v", got)
+	}
+}

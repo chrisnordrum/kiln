@@ -78,7 +78,8 @@ Modifiers: `?` nullable, `= v` default, `at now` defaults to insert time.
 
 `in` declares typed params; callers must supply every one.
 `allow` must be true or the call is denied (enforced at the boundary).
-`do` statements: `set T[e].f = e` `new T f=e ...` `del T[e]` `send effect to=e ...`
+`do` statements: `set T[e].f = e` `set session.x = e` `new T f=e ...` `del T[e]`
+              `send effect to=e ...`
 `after`: `refresh` (re-run the route's data) `goto /path` `toast "msg"`
 
 ## §routes
@@ -116,7 +117,8 @@ Action:  `link "label" to=/path` `button "label" do=action arg=e [confirm="msg"]
          `input name type [required] [max=n] [label="..."]` `select name from=list`
          `area name [rows=n]` `submit "label"`
 
-Attributes: `gap=0..6` `pad=0..6` `align=start|center|end` `style=<token>` `id=name`
+Attributes: `gap=0..6` `pad=0..6` `align=start|center|end` `style=<token>`
+These four are reserved on every element, so `do=` elements never pass them on.
 Style tokens: `plain quiet strong danger good warn`
 No CSS, no class names. The token set is closed.
 

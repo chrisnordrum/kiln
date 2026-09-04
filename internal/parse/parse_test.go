@@ -55,11 +55,11 @@ func TestExampleParsesClean(t *testing.T) {
 	if got := len(p.Tables); got != 3 {
 		t.Errorf("want 3 tables (User, Project, Task), got %d", got)
 	}
-	if got := len(p.Actions); got != 3 {
-		t.Errorf("want 3 actions, got %d", got)
+	if got := len(p.Actions); got != 4 {
+		t.Errorf("want 4 actions, got %d", got)
 	}
-	if got := len(p.Routes); got != 1 {
-		t.Errorf("want 1 route, got %d", got)
+	if got := len(p.Routes); got != 2 {
+		t.Errorf("want 2 routes, got %d", got)
 	}
 	if got := len(p.Tests); got != 2 {
 		t.Errorf("want 2 tests, got %d", got)
@@ -127,7 +127,10 @@ func TestActionDetail(t *testing.T) {
 
 func TestRouteDetail(t *testing.T) {
 	p, _ := parseExample(t)
-	r := p.Routes[0]
+	r, ok := p.Route("project_detail")
+	if !ok {
+		t.Fatal("no project_detail route")
+	}
 	if r.Name != "project_detail" || r.Path != "/projects/:id" {
 		t.Errorf("route = %s %s", r.Name, r.Path)
 	}
@@ -151,7 +154,11 @@ func TestRouteDetail(t *testing.T) {
 
 func TestViewTree(t *testing.T) {
 	p, _ := parseExample(t)
-	view := p.Routes[0].View
+	r, ok := p.Route("project_detail")
+	if !ok {
+		t.Fatal("no project_detail route")
+	}
+	view := r.View
 	if len(view) != 1 || view[0].Kind != "page" {
 		t.Fatalf("view root = %+v", view)
 	}

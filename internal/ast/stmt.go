@@ -20,6 +20,17 @@ type Set struct {
 
 func (*Set) StmtKind() string { return "set" }
 
+// SetSession establishes session state: `set session.user = User[id]`. Without
+// it no action could sign anyone in, and the session a guard reads would have
+// no way to come into existence.
+type SetSession struct {
+	Pos
+	Name  string
+	Value Expr
+}
+
+func (*SetSession) StmtKind() string { return "set" }
+
 // New inserts a record: `new Task project=project title=title`.
 type New struct {
 	Pos

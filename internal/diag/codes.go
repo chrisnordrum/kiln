@@ -25,6 +25,11 @@ var explain = map[string]string{
 	"K031": "The action declares this parameter in its `in` block but the caller does not\nsupply it. Every parameter is required.",
 	"K032": "This argument is not declared in the action's `in` block. Add it there or\nremove it here.",
 	"K040": "This action's `allow` rule reads session state that the calling route's\n`guard` does not establish, so the call can never succeed. Either widen the\nguard or narrow the rule.",
+	"K042": "Two declarations share a name, or two routes share a path. Names are\nhow an agent addresses things, so they have to be unique.",
+	"K050": "No view element by this name. The element vocabulary is closed — there is\nno CSS and no class names — so see `kiln docs --section view` for the set.",
+	"K051": "This element takes a different number of positional arguments.",
+	"K052": "This element does not accept that attribute.",
+	"K053": "Something required was not supplied — an attribute the element needs, or a\nfield the table has no default for.",
 	"K041": "A form field does not match any parameter the action declares.",
 }
 
@@ -81,9 +86,19 @@ func Suggest(word string, candidates []string) []string {
 	return out
 }
 
-// distance is Levenshtein edit distance.
+// distance is Damerau-Levenshtein edit distance, restricted to adjacent
+// transpositions. Plain Levenshtein scores a transposition as two edits, which
+// would miss "Tsak" for "Task" — the single most common typo there is.
 func distance(a, b string) int {
 	ar, br := []rune(a), []rune(b)
+	if len(ar) == 0 {
+		return len(br)
+	}
+	if len(br) == 0 {
+		return len(ar)
+	}
+	// Three rolling rows: two back is what a transposition reaches for.
+	prev2 := make([]int, len(br)+1)
 	prev := make([]int, len(br)+1)
 	cur := make([]int, len(br)+1)
 	for j := range prev {
@@ -97,8 +112,11 @@ func distance(a, b string) int {
 				cost = 0
 			}
 			cur[j] = min(prev[j]+1, min(cur[j-1]+1, prev[j-1]+cost))
+			if i > 1 && j > 1 && ar[i-1] == br[j-2] && ar[i-2] == br[j-1] {
+				cur[j] = min(cur[j], prev2[j-2]+1)
+			}
 		}
-		prev, cur = cur, prev
+		prev2, prev, cur = prev, cur, prev2
 	}
 	return prev[len(br)]
 }

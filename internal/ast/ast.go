@@ -44,6 +44,16 @@ func (p *Program) Action(name string) (*Action, bool) {
 	return nil, false
 }
 
+// Route returns a route by name.
+func (p *Program) Route(name string) (*Route, bool) {
+	for _, r := range p.Routes {
+		if r.Name == name {
+			return r, true
+		}
+	}
+	return nil, false
+}
+
 // TableNames lists every declared table, for suggestions.
 func (p *Program) TableNames() []string {
 	out := make([]string, 0, len(p.Tables))

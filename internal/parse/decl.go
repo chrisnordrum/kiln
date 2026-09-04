@@ -83,6 +83,16 @@ func parseStmt(line *lex.Line, d *diag.List) ast.Stmt {
 	switch line.Head() {
 	case "set":
 		target := parsePostfix(c)
+		if n, ok := target.(*ast.Name); ok {
+			if n.Root() != "session" || len(n.Parts) != 2 {
+				d.Add(diag.Diag{Code: "K010", File: line.File, Line: line.Num,
+					Msg: sprintf("cannot assign to %s", n),
+					Fix: "write: set Table[key].field = <expr>, or set session.<name> = <expr>"})
+				return nil
+			}
+			c.expect("=")
+			return &ast.SetSession{Pos: p, Name: n.Parts[1], Value: parseExpr(c)}
+		}
 		idx, ok := target.(*ast.Index)
 		if !ok || len(idx.Path) != 1 {
 			d.Add(diag.Diag{Code: "K010", File: line.File, Line: line.Num,

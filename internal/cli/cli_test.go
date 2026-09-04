@@ -58,9 +58,19 @@ func TestDocsSection(t *testing.T) {
 }
 
 func TestUnimplementedCommandNamesItsPhase(t *testing.T) {
+	var pending string
+	for _, n := range Names() {
+		if commands[n].Run == nil {
+			pending = n
+			break
+		}
+	}
+	if pending == "" {
+		t.Skip("every command is implemented")
+	}
 	var out, errw bytes.Buffer
-	if code := Run([]string{"check"}, &out, &errw); code != 2 {
-		t.Errorf("want exit 2 for an unimplemented command, got %d", code)
+	if code := Run([]string{pending}, &out, &errw); code != 2 {
+		t.Errorf("want exit 2 for %s, got %d", pending, code)
 	}
 	if !strings.Contains(errw.String(), "phase") {
 		t.Errorf("want the phase named, got: %s", errw.String())
