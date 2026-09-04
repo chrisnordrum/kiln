@@ -30,12 +30,12 @@ var commands = map[string]*Command{
 	"fmt":     {Name: "fmt", Blurb: "rewrite to canonical form", Phase: 2, Run: runFmt},
 	"check":   {Name: "check", Blurb: "verify the whole program", Phase: 3, Run: runCheck},
 	"explain": {Name: "explain", Blurb: "what an error code means", Phase: 3, Run: runExplain},
-	"map":     {Name: "map", Blurb: "whole-app outline", Phase: 6},
-	"where":   {Name: "where", Blurb: "find a symbol's definition and uses", Phase: 6},
+	"map":     {Name: "map", Blurb: "whole-app outline", Phase: 6, Run: runMap},
+	"where":   {Name: "where", Blurb: "find a symbol's definition and uses", Phase: 6, Run: runWhere},
 	"snap":    {Name: "snap", Blurb: "render a route to stable text", Phase: 4, Run: runSnap},
 	"test":    {Name: "test", Blurb: "run tests/", Phase: 5, Run: runTest},
 	"dev":     {Name: "dev", Blurb: "dev server", Phase: 5},
-	"new":     {Name: "new", Blurb: "scaffold a route, table or action", Phase: 6},
+	"new":     {Name: "new", Blurb: "scaffold a route, table or action", Phase: 6, Run: runNew},
 }
 
 // Names returns every registered command name, sorted.
