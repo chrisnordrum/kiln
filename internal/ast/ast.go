@@ -275,11 +275,13 @@ type Test struct {
 // Step is one line of a test: seed, as, call, visit or expect.
 type Step struct {
 	Pos
-	Kind   string // seed, as, call, visit, expect
-	Target string // table name, action name, path, or session field
-	Attrs  []*Attr
-	Cond   Expr   // for expect
-	Text   string // for `expect text`
-	Denied bool   // for `expect denied`
-	As     *Attr  // for `expect denied when as user=2`
+	Kind     string // seed, as, call, visit, expect
+	Target   string // table name, action name, path, or session field
+	Attrs    []*Attr
+	Cond     Expr   // for expect
+	Text     string // for `expect text`
+	Negate   bool   // `expect no text`: the page must not contain it
+	Redirect string // `expect redirect /path`: the guard must have refused
+	Denied   bool   // for `expect denied`
+	As       *Attr  // for `expect denied when as user=2`
 }

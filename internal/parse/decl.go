@@ -423,7 +423,21 @@ func parseExpect(c *cursor, s *ast.Step, line *lex.Line, d *diag.List) {
 				s.As = attrs[0]
 			}
 		}
-	case c.acceptWord("text"):
+	case c.acceptWord("redirect"):
+		if c.eof() {
+			d.Add(diag.Diag{Code: "K010", File: line.File, Line: line.Num,
+				Msg: "expect redirect needs a path", Fix: "write: expect redirect /login"})
+			return
+		}
+		s.Redirect = c.next().Text
+
+	case c.atWord("no") || c.atWord("text"):
+		s.Negate = c.acceptWord("no")
+		if !c.acceptWord("text") {
+			d.Add(diag.Diag{Code: "K010", File: line.File, Line: line.Num,
+				Msg: "expect no needs `text`", Fix: `write: expect no text "something"`})
+			return
+		}
 		if c.eof() || c.peek().Kind != lex.String {
 			d.Add(diag.Diag{Code: "K010", File: line.File, Line: line.Num,
 				Msg: "expect text needs a string", Fix: `write: expect text "something"`})

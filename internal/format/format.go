@@ -342,6 +342,10 @@ func step(s *ast.Step) []string {
 			return []string{"expect", "denied", "when", "as", s.As.Name + "=" + Expr(s.As.Value)}
 		case s.Denied:
 			return []string{"expect", "denied"}
+		case s.Redirect != "":
+			return []string{"expect", "redirect", s.Redirect}
+		case s.Text != "" && s.Negate:
+			return []string{"expect", "no", "text", strconv.Quote(s.Text)}
 		case s.Text != "":
 			return []string{"expect", "text", strconv.Quote(s.Text)}
 		default:

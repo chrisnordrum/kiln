@@ -1,0 +1,8 @@
+# another user's projects are not listed
+
+## /projects
+
+page title="Projects"
+  head 1 "Projects"
+  row gap=2
+    link "Mine" to="/projects/1"

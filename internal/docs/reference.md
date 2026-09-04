@@ -137,7 +137,8 @@ No CSS, no class names. The token set is closed.
       expect Task[1].done == true
       expect denied when as user=2
 
-Route tests: `visit /projects/1` then `expect text "Tasks"`.
+Route tests: `visit /path` then `expect text "..."`, `expect no text "..."`
+(it must not render), or `expect redirect /login` (the guard refused).
 
 ## §cli
 

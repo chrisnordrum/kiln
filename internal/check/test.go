@@ -98,6 +98,10 @@ func (c *checker) checkExpect(s *ast.Step, sc *scope) {
 		}
 		return
 	}
+	if s.Redirect != "" {
+		c.checkPath(s.Redirect, s.Pos)
+		return
+	}
 	if s.Text != "" {
 		return
 	}

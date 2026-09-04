@@ -23,3 +23,17 @@ test "project list links to each project"
   as user=1
   visit /projects
   expect text "Newer site"
+
+test "the project list is signed in only"
+  visit /projects
+  expect redirect /login
+
+test "another user's projects are not listed"
+  seed User email="a@example.com" id=1 name="A"
+  seed User email="b@example.com" id=2 name="B"
+  seed Project id=1 owner=1 title="Mine"
+  seed Project id=2 owner=2 title="Theirs"
+  as user=1
+  visit /projects
+  expect text "Mine"
+  expect no text "Theirs"

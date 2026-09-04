@@ -32,7 +32,8 @@ func RunTest(p *ast.Program, t *ast.Test) Result {
 	// The most recent call, so `expect denied when as ...` can replay it.
 	var lastAction *ast.Action
 	var lastArgs map[string]eval.Value
-	var lastText string
+	var lastPage *Page
+	var lastPath string
 
 	fail := func(pos ast.Pos, format string, a ...any) {
 		res.Failures = append(res.Failures,
@@ -88,13 +89,13 @@ func RunTest(p *ast.Program, t *ast.Test) Result {
 				fail(s.Pos, "%v", err)
 				continue
 			}
-			if page.Redirect != "" {
-				lastText = ""
-				fail(s.Pos, "visit %s was redirected to %s by the route's guard", s.Target, page.Redirect)
-				continue
+			// A redirect is not a failure here. Whether it is the point of the
+			// test or a surprise is decided by the expectation that follows,
+			// which is what makes a guard testable at all.
+			lastPage, lastPath = page, s.Target
+			if page.Redirect == "" {
+				res.Pages = append(res.Pages, Visited{Path: s.Target, Text: page.Text})
 			}
-			lastText = page.Text
-			res.Pages = append(res.Pages, Visited{Path: s.Target, Text: page.Text})
 
 		case "expect":
 			switch {
@@ -123,8 +124,26 @@ func RunTest(p *ast.Program, t *ast.Test) Result {
 						who, lastAction.Name)
 				}
 
+			case s.Redirect != "":
+				switch {
+				case lastPage == nil:
+					fail(s.Pos, "expect redirect has no visit above it")
+				case lastPage.Redirect == "":
+					fail(s.Pos, "visit %s rendered instead of redirecting to %s", lastPath, s.Redirect)
+				case lastPage.Redirect != s.Redirect:
+					fail(s.Pos, "visit %s redirected to %s, not %s", lastPath, lastPage.Redirect, s.Redirect)
+				}
+
 			case s.Text != "":
-				if !strings.Contains(lastText, s.Text) {
+				switch {
+				case lastPage == nil:
+					fail(s.Pos, "expect text has no visit above it")
+				case lastPage.Redirect != "":
+					fail(s.Pos, "visit %s was redirected to %s, so nothing rendered",
+						lastPath, lastPage.Redirect)
+				case s.Negate && strings.Contains(lastPage.Text, s.Text):
+					fail(s.Pos, "the page contains %q and should not", s.Text)
+				case !s.Negate && !strings.Contains(lastPage.Text, s.Text):
 					fail(s.Pos, "the page does not contain %q", s.Text)
 				}
 

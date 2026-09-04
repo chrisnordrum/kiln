@@ -308,3 +308,82 @@ test "second starts empty"
 		t.Errorf("state leaked between tests: %v", results[1].Failures)
 	}
 }
+
+// A guard is proven statically by K040 and, until now, covered by no test at
+// all: a redirect made visit itself fail, so there was nothing to assert on.
+func TestGuardRedirectIsTestable(t *testing.T) {
+	p := load(t, `
+test "anonymous visitors are sent to sign in"
+  visit /tasks
+  expect redirect /login
+
+test "the wrong target is caught"
+  visit /tasks
+  expect redirect /tasks
+
+test "a rendered page is not a redirect"
+  seed User id=1 name="Ada"
+  as user=1
+  visit /tasks
+  expect redirect /login
+`)
+	res := RunTests(p)
+	if !res[0].OK() {
+		t.Errorf("a real redirect should satisfy the expectation: %v", res[0].Failures)
+	}
+	if res[1].OK() {
+		t.Error("the wrong redirect target should fail")
+	} else if !strings.Contains(res[1].Failures[0], "not /tasks") {
+		t.Errorf("want both targets named, got %q", res[1].Failures[0])
+	}
+	if res[2].OK() {
+		t.Error("a page that renders should not satisfy a redirect expectation")
+	}
+}
+
+// Absence needs a first-class assertion. Without one the only way to prove a
+// row is hidden was to read a snapshot.
+func TestNegativeTextAssertion(t *testing.T) {
+	p := load(t, `
+test "absent text passes"
+  seed User id=1 name="Ada"
+  seed Task id=1 owner=1 title="Visible" rank=0
+  as user=1
+  visit /tasks
+  expect text "Visible"
+  expect no text "Hidden"
+
+test "present text fails"
+  seed User id=1 name="Ada"
+  seed Task id=1 owner=1 title="Visible" rank=0
+  as user=1
+  visit /tasks
+  expect no text "Visible"
+`)
+	res := RunTests(p)
+	if !res[0].OK() {
+		t.Errorf("absent text should pass: %v", res[0].Failures)
+	}
+	if res[1].OK() {
+		t.Error("text that is present should fail a negative assertion")
+	} else if !strings.Contains(res[1].Failures[0], "should not") {
+		t.Errorf("want a clear message, got %q", res[1].Failures[0])
+	}
+}
+
+// Asserting on a page that was redirected away should say so, rather than
+// reporting that the text is merely missing.
+func TestTextAssertionAfterARedirectExplainsItself(t *testing.T) {
+	p := load(t, `
+test "guarded away"
+  visit /tasks
+  expect text "Ship it"
+`)
+	res := RunTests(p)
+	if res[0].OK() {
+		t.Fatal("want a failure")
+	}
+	if !strings.Contains(res[0].Failures[0], "redirected") {
+		t.Errorf("want the redirect named as the cause, got %q", res[0].Failures[0])
+	}
+}
