@@ -73,3 +73,62 @@ any of them fails the suite.
   snapshot differ from the last.
 - **`map` and `where` parse without checking.** Looking around matters most
   when a program does not yet check.
+- **A path concatenates with anything.** `"/projects/" + p.id` builds a URL.
+  Refusing it — because a `/`-leading literal is typed `Path` and `Path + ID`
+  is not text — made a link to a record impossible to write, which is the most
+  ordinary thing a web page does.
+- **A field reference inside a quoted path is K026,** decided against the
+  scope. `to="/projects/p.id"` renders the same dead link on every row *and*
+  resolves, because `:id` is a wildcard accepting any text. The scope is what
+  keeps the check precise: `p` is bound, `robots` in `/robots.txt` is not.
+- **A timestamp is seeded as text.** `at` has no literal form, and every seeded
+  row was taking the fixed clock, so no time-ordered query was testable.
+- **The view depth cap measures the view tree, not file indentation.**
+  `route > view > page` is overhead every route pays before layout begins.
+  Counting it rejected a card holding a list of rows. **This limit has produced
+  two false positives and no true ones: if it fires again on a reasonable
+  layout, delete it rather than raise it a third time.**
+- **K040 reports once per route and session field,** naming every action
+  affected. Keyed per action, one missing guard produced one diagnostic per
+  action that tripped over it — the cascade the machinery exists to prevent.
+
+## Where things stand
+
+Working end to end: lexer, parser, canonical formatter, whole-program checker,
+evaluator, text and HTML renderers, test runner, dev server, and the three
+orientation commands. 164 tests, zero dependencies, reference at 56% of its
+3,000-token budget.
+
+The language was tested by running four cold Claude Code sessions against it,
+each given only `kiln docs` and a feature request. `eval/` holds the method,
+the pre-registered scoring, the transcripts' outcomes and the resulting
+backlog; `eval/results/` holds what each session actually wrote. Read
+`eval/RESULTS.md` before changing anything — it is the only evidence that
+exists for whether this design works, and every item it found is now fixed.
+
+The single most important finding: `kiln check` was green on a page where every
+link 404'd. Four days of building never hit it because the example app had one
+data route and no navigation between records. **The example is the spec in
+practice.** Anything the example does not exercise is unverified, so a language
+change lands in `examples/tasks` or it is not done.
+
+### Next, in order
+
+1. **A second eval round.** Re-run the four tasks against the fixed language.
+   Fix the rubric first: it scored task 1 Weak for three check-fix cycles, but
+   all three were the checker teaching the language to a session that then
+   produced correct, tested code in under two minutes. "The checker caught it"
+   and "the session struggled" are different outcomes and the bar cannot tell
+   them apart. Also record which files each session opens — that is the
+   evidence for "one screen, one read" and only one run captured it.
+2. **Persistence.** The store is in memory behind `eval.Store`; nothing else
+   depends on how it persists. No test, check or snapshot needs it, which is
+   why it has stayed deferred.
+3. **The `kiln docs` skill,** so a session loads the language without being
+   told to. Worth more now than before, since the hole it would have taught
+   around is closed.
+
+Isolation matters when running the eval: a session that can reach this repo
+will infer the language from the compiler instead of from the reference, which
+is what happened in the task-3 run. `eval/setup.sh` builds the clean room and
+refuses to overwrite one without `REPLACE=1`.
