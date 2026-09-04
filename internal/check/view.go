@@ -66,6 +66,16 @@ var inputTypes = []string{"text", "int", "num", "bool", "at"}
 // spacingMax is the largest gap or pad step.
 const spacingMax = 6
 
+// maxViewDepth is how far a view may nest below its page.
+//
+// Measured on the view tree rather than on file indentation, because
+// route > view > page is fixed overhead every route pays before any layout
+// begins — counting it made an ordinary card-in-a-list hit the cap. The limit
+// has so far produced two false positives and no true ones, so if it fires
+// again on a reasonable layout it should be deleted rather than raised a third
+// time.
+const maxViewDepth = 6
+
 // ElementNames lists every element, for suggestions and for the reference test.
 func ElementNames() []string {
 	out := make([]string, 0, len(elements)+3)

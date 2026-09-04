@@ -18,8 +18,11 @@ import (
 // read to change one line.
 const (
 	IndentWidth = 2
-	MaxDepth    = 6
-	MaxLines    = 120
+	// MaxDepth is a safety net against runaway indentation, not a design rule.
+	// The meaningful limit is on view nesting and lives in the checker, which
+	// is the only place that knows a view from a schema.
+	MaxDepth = 10
+	MaxLines = 120
 )
 
 // Kind classifies a token.
@@ -101,8 +104,8 @@ func Lex(file, src string, d *diag.List) []*Line {
 		depth := indent / IndentWidth
 		if depth > MaxDepth {
 			d.Add(diag.Diag{Code: "K012", File: file, Line: num,
-				Msg: sprintf("nested %d levels, the cap is %d", depth, MaxDepth),
-				Fix: "split the inner block into its own route or action"})
+				Msg: sprintf("indented %d levels, which is past anything Kiln nests", depth),
+				Fix: "check the indentation; a declaration never needs this depth"})
 			continue
 		}
 		tokens := tokenize(file, num, indent, body, d)

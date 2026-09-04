@@ -672,3 +672,134 @@ func TestNullableParameterSurvivesFormatting(t *testing.T) {
 		t.Errorf("max = %d, want 200", param.Max)
 	}
 }
+
+// One missing guard is one mistake. Reporting it once per action that trips
+// over it buries the cause under its own consequences.
+func TestUnguardedRouteReportsOnceNamingEveryAction(t *testing.T) {
+	src := `
+action edit
+  in
+    id ref Task
+  allow session.user == Task[id].project.owner
+  do
+    set Task[id].done = true
+
+action wipe
+  in
+    id ref Task
+  allow session.user == Task[id].project.owner
+  do
+    del Task[id]
+
+route r
+  path /r
+  view
+    page
+      button "Edit" do=edit id=1
+      button "Wipe" do=wipe id=1`
+
+	var found []diag.Diag
+	for _, g := range run(t, src) {
+		if g.Code == "K040" {
+			found = append(found, g)
+		}
+	}
+	if len(found) != 1 {
+		t.Fatalf("want 1 K040 for 1 missing guard, got %d: %+v", len(found), found)
+	}
+	for _, action := range []string{"edit", "wipe"} {
+		if !strings.Contains(found[0].Msg, action) {
+			t.Errorf("the message should name %s: %q", action, found[0].Msg)
+		}
+	}
+	// The insecure repair may be mentioned, but never as an equal option.
+	if !strings.Contains(found[0].Fix, "removes the permission") {
+		t.Errorf("the fix must say what widening the rule costs: %q", found[0].Fix)
+	}
+	if !strings.HasPrefix(found[0].Fix, "add `guard") {
+		t.Errorf("the fix should lead with the guard: %q", found[0].Fix)
+	}
+}
+
+// Two routes each missing a guard are two mistakes, not one.
+func TestUnguardedRoutesAreNotCollapsedAcrossRoutes(t *testing.T) {
+	src := `
+action edit
+  in
+    id ref Task
+  allow session.user == Task[id].project.owner
+  do
+    set Task[id].done = true
+
+route one
+  path /one
+  view
+    page
+      button "Edit" do=edit id=1
+
+route two
+  path /two
+  view
+    page
+      button "Edit" do=edit id=1`
+	var n int
+	for _, g := range run(t, src) {
+		if g.Code == "K040" {
+			n++
+		}
+	}
+	if n != 2 {
+		t.Errorf("want one K040 per unguarded route, got %d", n)
+	}
+}
+
+// The depth limit is about the view tree. route > view > page is fixed
+// overhead every route pays, and counting it rejected ordinary layouts.
+func TestViewDepthIsMeasuredFromThePage(t *testing.T) {
+	body := func(levels int) string {
+		var b strings.Builder
+		b.WriteString("\nroute r\n  path /r\n  data\n    tasks many Task where rank >= 0\n  view\n    page\n")
+		indent := "      "
+		for i := 0; i < levels-1; i++ {
+			b.WriteString(indent + "col\n")
+			indent += "  "
+		}
+		b.WriteString(indent + "text \"deep\"\n")
+		return b.String()
+	}
+
+	if got := codes(t, body(maxViewDepth)); hasCode(got, "K012") {
+		t.Errorf("a view %d levels below page should be allowed, got %v", maxViewDepth, got)
+	}
+	if got := codes(t, body(maxViewDepth+1)); !hasCode(got, "K012") {
+		t.Errorf("a view %d levels below page should be rejected, got %v", maxViewDepth+1, got)
+	}
+}
+
+// The layout that made this cap wrong twice: a list of cards, each holding a
+// row of controls with something underneath.
+func TestOrdinaryNestedLayoutIsAllowed(t *testing.T) {
+	src := `
+action edit
+  in
+    id ref Task
+  allow true
+  do
+    set Task[id].done = true
+
+route r
+  path /r
+  data
+    tasks many Task where rank >= 0
+  view
+    page
+      card
+        col gap=2
+          each tasks as t
+            row gap=2
+              text t.title
+              button "Edit" do=edit id=t.id`
+	if got := codes(t, src); len(got) > 0 {
+		t.Errorf("a card holding a list of rows should check clean, got %v", got)
+	}
+}

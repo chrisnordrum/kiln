@@ -2,6 +2,7 @@ package check
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -26,6 +27,7 @@ func (c *checker) checkRoutes() {
 }
 
 func (c *checker) checkRoute(r *ast.Route) {
+	clear(c.pending)
 	sc := &scope{c: c, params: pathParams(r.Path), vars: map[string]Type{}}
 
 	if r.Guard != nil {
@@ -39,7 +41,8 @@ func (c *checker) checkRoute(r *ast.Route) {
 	for _, q := range r.Data {
 		c.checkQuery(q, sc)
 	}
-	c.checkNodes(r.View, sc, r)
+	c.checkNodes(r.View, sc, r, 0)
+	c.reportUnguarded(r)
 }
 
 // pathParams reads :name segments out of a route path.
@@ -164,13 +167,21 @@ func pathMatches(pattern, path string) bool {
 
 // --- view ---
 
-func (c *checker) checkNodes(nodes []*ast.Node, sc *scope, r *ast.Route) {
+func (c *checker) checkNodes(nodes []*ast.Node, sc *scope, r *ast.Route, depth int) {
+	if depth > maxViewDepth && len(nodes) > 0 {
+		n := nodes[0]
+		c.errf(n.Pos, "K012", "the view nests %d levels below its page, past the cap of %d",
+			depth, maxViewDepth).
+			root("depth:" + n.File).
+			fix("lift part of this into a sibling block, or split the screen into another route")
+		return
+	}
 	for _, n := range nodes {
-		c.checkNode(n, sc, r)
+		c.checkNode(n, sc, r, depth)
 	}
 }
 
-func (c *checker) checkNode(n *ast.Node, sc *scope, r *ast.Route) {
+func (c *checker) checkNode(n *ast.Node, sc *scope, r *ast.Route, depth int) {
 	switch n.Kind {
 	case "each":
 		list := c.typeOf(n.List, sc)
@@ -184,13 +195,13 @@ func (c *checker) checkNode(n *ast.Node, sc *scope, r *ast.Route) {
 		} else {
 			inner.vars[n.Var] = tUnknown
 		}
-		c.checkNodes(n.Children, inner, r)
+		c.checkNodes(n.Children, inner, r, depth+1)
 		return
 
 	case "when":
 		c.want(c.typeOf(n.Cond, sc), Bool, n.Pos, "when")
-		c.checkNodes(n.Children, sc, r)
-		c.checkNodes(n.Else, sc, r)
+		c.checkNodes(n.Children, sc, r, depth+1)
+		c.checkNodes(n.Else, sc, r, depth+1)
 		return
 	}
 
@@ -214,7 +225,7 @@ func (c *checker) checkNode(n *ast.Node, sc *scope, r *ast.Route) {
 
 	c.checkNodeArgs(n, sc)
 	c.checkNodeAttrs(n, spec, sc, r)
-	c.checkNodes(n.Children, sc, r)
+	c.checkNodes(n.Children, sc, r, depth+1)
 }
 
 // childScope copies a scope so a loop variable does not leak to siblings.
@@ -468,22 +479,60 @@ func (c *checker) checkSpacing(a *ast.Attr) {
 
 // --- reachability ---
 
-// checkReachable reports a control that can never succeed: the action's allow
+// checkReachable records a control that can never succeed: the action's allow
 // rule reads session state that the route's guard does not establish, so an
 // anonymous visitor can reach a button whose action will always deny them.
+//
+// Recording rather than reporting, so one missing guard produces one
+// diagnostic naming every action it blocks, instead of one per action.
 func (c *checker) checkReachable(a *ast.Action, r *ast.Route, pos ast.Pos) {
 	if a.Allow == nil || r == nil {
 		return
 	}
-	for _, root := range sessionRoots(a.Allow) {
-		if guardEstablishes(r.Guard, root) {
+	for _, field := range sessionRoots(a.Allow) {
+		if guardEstablishes(r.Guard, field) {
 			continue
 		}
-		c.errf(pos, "K040", "%s allows on session.%s, which route %s does not guard",
-			a.Name, root, r.Name).
-			root("reach:" + a.Name + ":" + r.Name).
-			fix(sprintf("add `guard session.%s else redirect /login` to the route, or widen the allow rule", root))
+		u, ok := c.pending[field]
+		if !ok {
+			u = &unguarded{pos: pos, seen: map[string]bool{}}
+			c.pending[field] = u
+		}
+		if !u.seen[a.Name] {
+			u.seen[a.Name] = true
+			u.actions = append(u.actions, a.Name)
+		}
 	}
+}
+
+// reportUnguarded emits the collected reachability failures for one route.
+func (c *checker) reportUnguarded(r *ast.Route) {
+	fields := make([]string, 0, len(c.pending))
+	for f := range c.pending {
+		fields = append(fields, f)
+	}
+	sort.Strings(fields)
+
+	for _, field := range fields {
+		u := c.pending[field]
+		sort.Strings(u.actions)
+		c.errf(u.pos, "K040", "route %s does not guard session.%s, which %s require: %s",
+			r.Name, field, plural(len(u.actions), "bound action", "bound actions"),
+			join(u.actions, ", ")).
+			root(sprintf("reach:%s:%s", r.Name, field)).
+			fix(sprintf("add `guard session.%s else redirect /login` to the route. "+
+				"Widening an allow rule would also silence this, but that removes the "+
+				"permission rather than satisfying it", field))
+	}
+	clear(c.pending)
+}
+
+// plural picks a word form, so a message reads correctly for one or many.
+func plural(n int, one, many string) string {
+	if n == 1 {
+		return "1 " + one
+	}
+	return sprintf("%d %s", n, many)
 }
 
 // sessionRoots lists the session fields an expression reads.

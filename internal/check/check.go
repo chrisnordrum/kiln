@@ -10,11 +10,25 @@ type checker struct {
 	p     *ast.Program
 	d     *diag.List
 	paths map[string]*ast.Route // route path to route
+
+	// pending collects, for the route being checked, each session field its
+	// bound actions require but its guard does not establish. Reported once per
+	// field at the end of the route rather than once per action, because the
+	// missing guard is the root cause and the actions are what trip over it.
+	pending map[string]*unguarded
+}
+
+// unguarded is one session field a route fails to establish, and the actions
+// that need it.
+type unguarded struct {
+	pos     ast.Pos
+	actions []string
+	seen    map[string]bool
 }
 
 // Program checks a whole parsed program.
 func Program(p *ast.Program, d *diag.List) {
-	c := &checker{p: p, d: d, paths: map[string]*ast.Route{}}
+	c := &checker{p: p, d: d, paths: map[string]*ast.Route{}, pending: map[string]*unguarded{}}
 	c.checkApp()
 	c.checkSchema()
 	for _, r := range p.Routes {
