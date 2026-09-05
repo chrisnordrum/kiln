@@ -10,6 +10,8 @@ table Task
   title text max 200
   done bool = false
   notes text?
+  priority enum low normal high = "normal"
+  estimate int = 0
   rank int
   created at now
   index project, rank

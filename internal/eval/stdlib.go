@@ -175,8 +175,8 @@ func joinList(v Value, sep string) string {
 		return ""
 	}
 	parts := make([]string, 0, len(l.Rows))
-	for _, r := range l.Rows {
-		parts = append(parts, Text(r["id"]))
+	for _, v := range l.Column() {
+		parts = append(parts, Text(v))
 	}
 	return strings.Join(parts, sep)
 }
@@ -188,13 +188,14 @@ func sumList(v Value) Value {
 	}
 	var total float64
 	whole := true
-	for _, r := range l.Rows {
-		for _, cell := range r {
-			if f, ok := number(cell); ok {
-				total += f
-				if !isInt(cell) {
-					whole = false
-				}
+	// Only the projected column. Summing every cell of every row was how a
+	// two-line expense report totalled $59.75 instead of $54.75: the ids and
+	// the foreign keys were in the total too.
+	for _, cell := range l.Column() {
+		if f, ok := number(cell); ok {
+			total += f
+			if !isInt(cell) {
+				whole = false
 			}
 		}
 	}

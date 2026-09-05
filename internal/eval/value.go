@@ -29,9 +29,25 @@ type Record struct {
 }
 
 // List is an ordered set of rows from one table.
+//
+// Field, when set, means the list has been narrowed to one column: `sum` and
+// `join` then read that column instead of guessing which one was meant. They
+// used to guess — sum added every numeric cell in every row, the primary key
+// included, and join returned the ids — and both produced a plausible answer
+// to a question nobody asked.
 type List struct {
 	Table string
 	Rows  []Row
+	Field string
+}
+
+// Column reports the values a projected list holds.
+func (l List) Column() []Value {
+	out := make([]Value, 0, len(l.Rows))
+	for _, r := range l.Rows {
+		out = append(out, r[l.Field])
+	}
+	return out
 }
 
 // Text renders a value the way it appears on a page.
@@ -55,6 +71,13 @@ func Text(v Value) string {
 	case Record:
 		return fmt.Sprintf("%s[%v]", x.Table, x.Row["id"])
 	case List:
+		if x.Field != "" {
+			parts := make([]string, 0, len(x.Rows))
+			for _, v := range x.Column() {
+				parts = append(parts, Text(v))
+			}
+			return strings.Join(parts, ", ")
+		}
 		return fmt.Sprintf("%d %s", len(x.Rows), x.Table)
 	}
 	return fmt.Sprint(v)

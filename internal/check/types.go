@@ -33,10 +33,16 @@ const (
 
 // Type is a value's type. Table names the table for Ref, Record and List;
 // Values holds an enum's permitted values.
+//
+// Elem is set only on a List that has been narrowed to one column, and holds
+// that column's kind. An ordinary list of rows leaves it Unknown, which is
+// what lets `sum` refuse a whole list instead of quietly adding up every
+// numeric cell in it.
 type Type struct {
 	Kind   Kind
 	Table  string
 	Values []string
+	Elem   Kind
 }
 
 var (

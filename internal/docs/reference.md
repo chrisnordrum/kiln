@@ -14,6 +14,7 @@ A view nests at most 6 levels below its page; files cap at 120 lines.
 
 Literals: `"text"` `123` `1.5` `true` `false` `null`
 Refs: `params.id` `session.user` `Task[expr].field` `t.field` (loop var)
+      `items.price` reads one column of a list, for `sum` and `join`.
 Ops: `== != < <= > >= and or not + - * / %` (`+` joins text, and a path
      joins with anything to build a URL)
 Conditional: `if cond then a else b`
@@ -23,8 +24,8 @@ Every expression provably terminates.
 ## §stdlib
 
 text: `upper(s) lower(s) title(s) trim(s) slug(s) truncate(s,n) len(s)`
-      `join(list,sep) has(s,sub) replace(s,a,b)`
-num:  `abs(n) round(n) floor(n) ceil(n) min(a,b) max(a,b) sum(list)`
+      `join(col,sep) has(s,sub) replace(s,a,b)`
+num:  `abs(n) round(n) floor(n) ceil(n) min(a,b) max(a,b) sum(col)`
       `count(list) money(n) pct(n)`
 date: `now() ago(at) date(at,"Y-m-d") days_between(a,b) plus_days(at,n)`
 misc: `coalesce(a,b) plural(n,"item","items") default(v,d)`
@@ -52,7 +53,7 @@ misc: `coalesce(a,b) plural(n,"item","items") default(v,d)`
       project  ref Project on delete cascade
       title    text max 200
       notes    text?
-      status   enum todo doing done = todo
+      status   enum todo doing done = "todo"
       rank     int
       done     bool = false
       created  at now

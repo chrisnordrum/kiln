@@ -47,3 +47,14 @@ test "a task note renders only when it is set"
   visit /projects/1
   expect text "Remember this"
   expect no text "null"
+
+test "the detail page totals estimates and not ids"
+  seed User email="a@example.com" id=1 name="A"
+  seed Project id=1 owner=1 title="Site"
+  seed Task done=false estimate=3 id=1 priority="high" project=1 rank=0 title="Ship it"
+  seed Task done=false estimate=4 id=2 priority="low" project=1 rank=1 title="Then this"
+  as user=1
+  visit /projects/1
+  expect text "7"
+  expect text "high"
+  expect no text "13"

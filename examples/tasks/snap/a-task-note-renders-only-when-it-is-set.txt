@@ -4,18 +4,23 @@
 
 page title="Site"
   head 2 "Tasks"
+  text "tasks"
+  text "0"
   col gap=0
     row gap=2
       check do=toggle_task(done=$value, id=1) value=false
       text "With a note"
+      badge "normal"
       button "Delete" do=delete_task(id=1) confirm="Delete task?" style=quiet
     text "Remember this" style=quiet
   col gap=0
     row gap=2
       check do=toggle_task(done=$value, id=2) value=false
       text "Bare"
+      badge "normal"
       button "Delete" do=delete_task(id=2) confirm="Delete task?" style=quiet
   form do=add_task(project="1")
     input title text required label="New task" max=200
     area notes label="Notes" rows=2
+    input estimate int label="Estimate"
     submit "Add task"

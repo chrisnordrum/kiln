@@ -185,15 +185,33 @@ func (c *checker) resolveName(n *ast.Name, sc *scope) Type {
 // walk follows a field path from a starting type. A ref is followed into the
 // table it points at, so Task[id].project.owner reads through two tables.
 func (c *checker) walk(t Type, path []string, pos ast.Pos) Type {
-	for _, part := range path {
+	for i, part := range path {
 		var table string
 		switch t.Kind {
 		case Record, Ref:
 			table = t.Table
 		case List:
-			c.errf(pos, "K030", "%s is a list; read a field inside an `each`", t).
-				fix("loop over it: each <list> as x")
-			return tUnknown
+			// A list narrows to one of its columns, which is what sum and
+			// join read. A column of values has no fields of its own, so it
+			// is the last step of a path.
+			tbl, ok := c.p.Table(t.Table)
+			if !ok {
+				return tUnknown
+			}
+			f, ok := tbl.Field(part)
+			if !ok {
+				c.errf(pos, "K021", "%s has no field %s", t.Table, part).
+					near(diag.Suggest(part, tbl.FieldNames())).
+					root(t.Table + "." + part).
+					fix("read a field the table declares")
+				return tUnknown
+			}
+			if i < len(path)-1 {
+				c.errf(pos, "K030", "%s.%s is a column of values, not a record", t.Table, part).
+					fix("a column is the end of a path: sum(items.price)")
+				return tUnknown
+			}
+			return Type{Kind: List, Table: t.Table, Elem: fieldType(f).Kind}
 		default:
 			c.errf(pos, "K030", "%s has no fields to read", t).
 				fix("read a field from a record or a reference")
@@ -239,6 +257,9 @@ func (c *checker) checkCall(x *ast.Call, sc *scope) Type {
 				x.Fn, i+1, got, Type{Kind: sig.params[i]}).
 				fix("supply a " + Type{Kind: sig.params[i]}.String())
 		}
+	}
+	if sig.column != Unknown && len(x.Args) > 0 {
+		c.wantColumn(x, sig.column, c.typeOf(x.Args[0], sc))
 	}
 	// coalesce and default return whatever they were given.
 	if sig.ret.Kind == Unknown && len(x.Args) > 0 {
@@ -309,4 +330,26 @@ func keys(m map[string]Type) []string {
 		out = append(out, k)
 	}
 	return out
+}
+
+// wantColumn enforces that a list argument names one column.
+//
+// `sum(expenses)` used to be legal and returned the sum of every numeric cell
+// in every row, the primary key and the foreign keys included. It checked
+// clean and rendered as money, which is the failure this language exists to
+// prevent, so the whole-list form is now an error rather than an answer.
+func (c *checker) wantColumn(x *ast.Call, want Kind, got Type) {
+	if got.Kind != List {
+		return // already reported as the wrong kind
+	}
+	if got.Elem == Unknown {
+		c.errf(x.Pos, "K030", "%s needs one column, not a whole list", x.Fn).
+			fix("name the column: " + x.Fn + "(<list>.<field>" +
+				map[bool]string{true: ", sep)", false: ")"}[x.Fn == "join"])
+		return
+	}
+	if want == Num && got.Elem != Num && got.Elem != Int {
+		c.errf(x.Pos, "K030", "%s needs a numeric column, got %s", x.Fn, Type{Kind: got.Elem}).
+			fix("sum a column declared int or num")
+	}
 }

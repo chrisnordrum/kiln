@@ -1,6 +1,8 @@
 package parse
 
 import (
+	"strings"
+
 	"kiln/internal/ast"
 	"kiln/internal/diag"
 	"kiln/internal/lex"
@@ -49,6 +51,9 @@ func parseAction(line *lex.Line, d *diag.List) *ast.Action {
 	return a
 }
 
+// paramTypes are the types an action input may declare.
+var paramTypes = []string{"text", "int", "num", "bool", "at", "ref"}
+
 // parseParam reads one action input: `name type [ref Table] [max N]`.
 func parseParam(line *lex.Line, d *diag.List) *ast.Param {
 	if len(line.Tokens) < 2 {
@@ -64,6 +69,15 @@ func parseParam(line *lex.Line, d *diag.List) *ast.Param {
 		p.Ref = c.next().Text
 	}
 	p.Nullable = c.accept("?")
+	// An enum is not a parameter type. Saying so once matters: the values that
+	// follow it are all ordinary words, so reporting them as bad modifiers
+	// produced one diagnostic per enum value and never named the real problem.
+	if p.Type == "enum" {
+		d.Add(diag.Diag{Code: "K010", File: line.File, Line: line.Num,
+			Msg: sprintf("parameter %s cannot be an enum", p.Name),
+			Fix: "parameters take " + strings.Join(paramTypes, ", ") + "; keep the enum on the table and take `" + p.Name + " text` here"})
+		return p
+	}
 	for !c.eof() {
 		if c.acceptWord("max") {
 			p.Max = intArg(c, d)
@@ -73,10 +87,13 @@ func parseParam(line *lex.Line, d *diag.List) *ast.Param {
 			p.Nullable = true
 			continue
 		}
+		// One mistake, one diagnostic: everything after the first stray word
+		// is a consequence of it, not a separate error.
 		tok := c.next()
 		d.Add(diag.Diag{Code: "K010", File: line.File, Line: tok.Line, Col: tok.Col,
 			Msg: sprintf("%q is not a parameter modifier", tok.Text),
 			Fix: "parameters take `?` to allow null, and an optional `max N`"})
+		break
 	}
 	return p
 }

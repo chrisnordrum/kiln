@@ -44,8 +44,24 @@ func (r *Runner) env() *eval.Env {
 }
 
 // Seed inserts a row directly, bypassing permissions, the way a fixture does.
+//
+// A fixture is source text, so every value goes through the same coercion a
+// form field gets. Doing it here rather than in the caller is what keeps the
+// test runner and the dev server seeding the same row: when only the tests
+// coerced, `at` columns held a time in tests and a raw string in the browser,
+// and every date function rendered blank on the page while the snapshot said
+// otherwise.
 func (r *Runner) Seed(table string, fields map[string]eval.Value) error {
-	_, err := r.E.S.Insert(table, eval.Row(fields))
+	row := eval.Row{}
+	for name, v := range fields {
+		if kind, ok := r.FieldType(table, name); ok {
+			if coerced, err := eval.Coerce(v, kind); err == nil {
+				v = coerced
+			}
+		}
+		row[name] = v
+	}
+	_, err := r.E.S.Insert(table, row)
 	return err
 }
 

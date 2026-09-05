@@ -3,6 +3,7 @@ package runner
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"kiln/internal/ast"
 	"kiln/internal/check"
@@ -25,6 +26,7 @@ table Task
   title text max 200
   done bool = false
   rank int
+  due at?
 
 action toggle
   in
@@ -385,5 +387,29 @@ test "guarded away"
 	}
 	if !strings.Contains(res[0].Failures[0], "redirected") {
 		t.Errorf("want the redirect named as the cause, got %q", res[0].Failures[0])
+	}
+}
+
+// A fixture is source text whoever supplies it. When only the test runner
+// coerced its seeds and the dev server did not, an `at` column held a
+// time.Time under `kiln test` and a raw string in the browser — so every date
+// function rendered correctly in the snapshot and blank on the page.
+func TestSeedCoercesToTheDeclaredType(t *testing.T) {
+	r := New(load(t, ""))
+	if err := r.Seed("Task", map[string]eval.Value{
+		"id": int64(1), "owner": int64(1), "title": "Ship it",
+		"rank": "3", "due": "2026-09-01T00:00:00Z",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	row, ok := r.Store().Get("Task", int64(1))
+	if !ok {
+		t.Fatal("no row")
+	}
+	if _, ok := row["due"].(time.Time); !ok {
+		t.Errorf("due is %#v (%T), want a time.Time", row["due"], row["due"])
+	}
+	if row["rank"] != int64(3) {
+		t.Errorf("rank is %#v, want int64(3)", row["rank"])
 	}
 }

@@ -3,8 +3,9 @@ action add_task
     project ref Project
     title text max 200
     notes text? max 200
+    estimate int
   allow session.user == Project[project].owner
   do
-    new Task done=false notes=notes project=project rank=0 title=title
+    new Task done=false estimate=estimate notes=notes priority="normal" project=project rank=0 title=title
   after
     refresh

@@ -193,6 +193,11 @@ func (e *Evaluator) walkValue(v Value, path []string) Value {
 	if rec, ok := v.(Record); ok {
 		return e.walk(rec, path)
 	}
+	// A list narrows to one of its columns, which is what `sum` and `join`
+	// take. Only one step: a column of values has no fields of its own.
+	if l, ok := v.(List); ok && len(path) == 1 && l.Field == "" {
+		return List{Table: l.Table, Rows: l.Rows, Field: path[0]}
+	}
 	// A bare id in scope: find what it points at using the first path step.
 	return nil
 }

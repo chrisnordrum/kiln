@@ -177,16 +177,15 @@ func (c *checker) checkTable(t *ast.Table) {
 				fix("write: " + f.Name + " enum a b c")
 		}
 		if f.Default != nil {
-			want := fieldType(f)
-			got := c.typeOf(f.Default, &scope{c: c})
-			if !comparable(want, got) {
-				c.errf(f.Pos, "K030", "%s.%s defaults to %s but is %s", t.Name, f.Name, got, want).
-					fix("give a default matching the field's type")
-			}
-			if f.Type == "enum" && !contains(f.Enum, f.Default.String()) {
-				c.errf(f.Pos, "K030", "%q is not one of %s's values", f.Default.String(), f.Name).
-					near(diag.Suggest(f.Default.String(), f.Enum)).
-					fix("use one of: " + join(f.Enum, ", "))
+			if f.Type == "enum" {
+				c.checkEnumDefault(f)
+			} else {
+				want := fieldType(f)
+				got := c.typeOf(f.Default, &scope{c: c})
+				if !comparable(want, got) {
+					c.errf(f.Pos, "K030", "%s.%s defaults to %s but is %s", t.Name, f.Name, got, want).
+						fix("give a default matching the field's type")
+				}
 			}
 		}
 	}
@@ -381,5 +380,37 @@ func (c *checker) checkKey(key ast.Expr, t *ast.Table, sc *scope, pos ast.Pos) {
 	if !got.numeric() {
 		c.errf(pos, "K030", "%s[...] needs an id, got %s", t.Name, got).
 			fix("index with the record's id")
+	}
+}
+
+// checkEnumDefault validates a default against the field's own values.
+//
+// An enum default is not resolved as an expression. A bare `todo` reads as a
+// name, so typeOf reported "nothing named todo" for something that was never a
+// reference, while the quoted form failed a membership test that compared
+// against the quoted spelling and suggested the bare one. Each diagnostic sent
+// the reader to the form the other rejected, and no default was writable at
+// all. An enum value is spelled the same way everywhere it appears: quoted.
+func (c *checker) checkEnumDefault(f *ast.Field) {
+	switch d := f.Default.(type) {
+	case *ast.Lit:
+		if d.Kind == "string" && contains(f.Enum, d.Text) {
+			return
+		}
+		c.errf(f.Pos, "K030", "%s is not one of %s's values", d.String(), f.Name).
+			near(diag.Suggest(d.Text, f.Enum)).
+			fix("use one of: " + join(f.Enum, ", "))
+	case *ast.Name:
+		if len(d.Parts) == 1 && contains(f.Enum, d.Parts[0]) {
+			c.errf(f.Pos, "K030", "%s's default is a bare name", f.Name).
+				fix("quote it: " + f.Name + " enum " + join(f.Enum, " ") + " = \"" + d.Parts[0] + "\"")
+			return
+		}
+		c.errf(f.Pos, "K030", "%s is not one of %s's values", d.String(), f.Name).
+			near(diag.Suggest(d.String(), f.Enum)).
+			fix("use one of: " + join(f.Enum, ", "))
+	default:
+		c.errf(f.Pos, "K030", "%s is not one of %s's values", f.Default.String(), f.Name).
+			fix("use one of: " + join(f.Enum, ", "))
 	}
 }

@@ -272,3 +272,37 @@ route r
 		t.Errorf("got %v", rec.Row)
 	}
 }
+
+// sum used to add every numeric cell of every row, the primary key and the
+// foreign keys included, so a two-line expense report totalled $59.75 instead
+// of $54.75. join had the same shape: it returned the ids, never the column
+// anyone wanted.
+func TestAggregatesReadOnlyTheirColumn(t *testing.T) {
+	e := New(program(t, ""))
+	if _, err := e.S.Insert("User", Row{"name": "Ada"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, task := range []struct {
+		title string
+		rank  int64
+	}{{"first", 10}, {"second", 20}} {
+		if _, err := e.S.Insert("Task", Row{
+			"owner": int64(1), "title": task.title, "rank": task.rank,
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	list := List{Table: "Task", Rows: e.S.All("Task")}
+
+	// ranks are 10 and 20; ids are 1 and 2, and must stay out of it.
+	if got := e.call("sum", []Value{List{Table: "Task", Rows: list.Rows, Field: "rank"}}); got != int64(30) {
+		t.Errorf("sum of the rank column = %v, want 30", got)
+	}
+	if got := e.call("join", []Value{List{Table: "Task", Rows: list.Rows, Field: "title"}, ", "}); got != "first, second" {
+		t.Errorf("join of the title column = %v, want \"first, second\"", got)
+	}
+	// count is about the rows themselves, so it still takes the whole list.
+	if got := e.call("count", []Value{list}); got != int64(2) {
+		t.Errorf("count = %v, want 2", got)
+	}
+}

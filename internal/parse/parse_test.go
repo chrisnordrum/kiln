@@ -249,3 +249,29 @@ func TestTestsParse(t *testing.T) {
 		t.Errorf("text expectation = %+v", textExpect)
 	}
 }
+
+// An enum is not a parameter type, and its values are ordinary words, so the
+// old loop reported every one of them as a bad modifier: five diagnostics for
+// one mistake, none of which named the actual problem.
+func TestEnumParameterReportsOnce(t *testing.T) {
+	var d diag.List
+	Program([]File{{Path: "a.kiln", Src: `
+action set_status
+  in
+    id ref Task
+    status enum todo doing done
+  allow true
+  do
+    refresh
+`}}, &d)
+	shown, _ := d.Resolved()
+	if len(shown) != 1 {
+		t.Fatalf("want exactly 1 diagnostic, got %d: %+v", len(shown), shown)
+	}
+	if !strings.Contains(shown[0].Msg, "cannot be an enum") {
+		t.Errorf("message should name the real problem, got %q", shown[0].Msg)
+	}
+	if !strings.Contains(shown[0].Fix, "status text") {
+		t.Errorf("fix should say what to write instead, got %q", shown[0].Fix)
+	}
+}

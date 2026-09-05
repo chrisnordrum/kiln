@@ -361,14 +361,50 @@ route r
       each project as p
         text p.title`, "K030"},
 
-		{"reading a field from a list", `
+		{"a path cannot continue past a column", `
 route r
   path /r
   data
     tasks many Task where rank > 0
   view
     page
-      text tasks.title`, "K030"},
+      text tasks.project.title`, "K030"},
+
+		{"a column must name a real field", `
+route r
+  path /r
+  data
+    tasks many Task where rank > 0
+  view
+    page
+      text sum(tasks.nope)`, "K021"},
+
+		{"sum refuses a whole list", `
+route r
+  path /r
+  data
+    tasks many Task where rank > 0
+  view
+    page
+      text sum(tasks)`, "K030"},
+
+		{"sum refuses a non-numeric column", `
+route r
+  path /r
+  data
+    tasks many Task where rank > 0
+  view
+    page
+      text sum(tasks.title)`, "K030"},
+
+		{"join refuses a whole list", `
+route r
+  path /r
+  data
+    tasks many Task where rank > 0
+  view
+    page
+      text join(tasks, ", ")`, "K030"},
 
 		{"ordering by a missing field", `
 route r
@@ -420,6 +456,48 @@ func guardSrc(guard string) string {
 }
 
 // A new record must supply every field that has no default.
+// An enum default had no writable spelling: the bare form reported "nothing
+// named todo" from name resolution, and the quoted form failed a membership
+// test that compared against the quoted string and suggested the bare one.
+// Each diagnostic sent the reader to the form the other rejected.
+func TestEnumDefault(t *testing.T) {
+	cases := []struct {
+		name, field, want string
+	}{
+		{"quoted is the spelling", `status enum todo doing done = "todo"`, ""},
+		{"bare says how to write it", `status enum todo doing done = todo`, "K030"},
+		{"a value that is not a member", `status enum todo doing done = "nope"`, "K030"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := codes(t, "\ntable Note\n  id id\n  "+c.field+"\n")
+			if c.want == "" {
+				if len(got) != 0 {
+					t.Fatalf("want a clean check, got %v", got)
+				}
+				return
+			}
+			if !hasCode(got, c.want) {
+				t.Fatalf("want %s, got %v", c.want, got)
+			}
+		})
+	}
+}
+
+// The bare form must say what to write instead, or the reader is left to
+// guess at the one spelling that works.
+func TestEnumDefaultNamesTheFix(t *testing.T) {
+	for _, d := range run(t, "\ntable Note\n  id id\n  status enum todo doing done = todo\n") {
+		if d.Code == "K030" {
+			if !strings.Contains(d.Fix, `= "todo"`) {
+				t.Errorf("fix should show the quoted form, got %q", d.Fix)
+			}
+			return
+		}
+	}
+	t.Fatal("no K030 reported")
+}
+
 func TestNewMustSupplyRequiredFields(t *testing.T) {
 	src := `
 action add

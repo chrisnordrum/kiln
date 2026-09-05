@@ -12,6 +12,11 @@ type builtin struct {
 	ret    Type
 	// variadicFrom, when non-zero, lets the last declared parameter repeat.
 	variadicFrom int
+	// column, when set, requires the List argument to be narrowed to one
+	// column — `sum(items.price)`, not `sum(items)`. Num additionally requires
+	// that column to be numeric. Without it, sum read every numeric cell of
+	// every row and returned a total nobody asked for.
+	column Kind
 }
 
 // anyKind marks a parameter that accepts any type.
@@ -26,7 +31,7 @@ var stdlib = map[string]builtin{
 	"slug":     {params: []Kind{Text}, ret: tText},
 	"truncate": {params: []Kind{Text, Int}, ret: tText},
 	"len":      {params: []Kind{Text}, ret: tInt},
-	"join":     {params: []Kind{List, Text}, ret: tText},
+	"join":     {params: []Kind{List, Text}, ret: tText, column: Text},
 	"has":      {params: []Kind{Text, Text}, ret: tBool},
 	"replace":  {params: []Kind{Text, Text, Text}, ret: tText},
 
@@ -37,7 +42,7 @@ var stdlib = map[string]builtin{
 	"ceil":  {params: []Kind{Num}, ret: tInt},
 	"min":   {params: []Kind{Num, Num}, ret: tNum},
 	"max":   {params: []Kind{Num, Num}, ret: tNum},
-	"sum":   {params: []Kind{List}, ret: tNum},
+	"sum":   {params: []Kind{List}, ret: tNum, column: Num},
 	"count": {params: []Kind{List}, ret: tInt},
 	"money": {params: []Kind{Num}, ret: tText},
 	"pct":   {params: []Kind{Num}, ret: tText},
