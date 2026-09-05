@@ -55,18 +55,56 @@ syntax: if the session cannot get there from `kiln docs`, that is the result.
 
 ## Scoring, decided before running
 
+Round 1's bar counted cycles. It scored task 1 Weak for three, but all three
+were the checker naming a fix the session then applied verbatim, landing
+correct, canonical and tested in under two minutes. Counting cycles measures
+how often the checker spoke, not whether the session was lost — and a
+diagnostic doing its job is the design working, not the session failing. The
+bar below was revised before round 2 and after round 1 was scored; round 1's
+recorded outcomes stand as they were pre-registered.
+
+A **cycle** is one `kiln check` that reports at least one diagnostic, after
+the session's first edit. A check before that is observing the state it was
+handed: task 4 opens on a failing check by construction, and counting that
+one would mean the repair task can never score Clean.
+
+A cycle is **guided** when the next edit applies the diagnostic's `fix:` line
+as written, or its plainly equivalent form. It is **unguided** when the session
+does anything else:
+
+- edits to a form the `fix:` line does not name,
+- re-reads the reference or searches before editing,
+- tries more than one candidate for the same diagnostic,
+- or trips the same code at the same site twice.
+
+Guided cycles are the checker doing its job. An unguided cycle means something
+failed, but not necessarily the session: task 2's single unguided cycle was the
+language having no way to assert absence, so the session deleted the assertion
+rather than follow a fix line that pointed nowhere useful. The count scores the
+run; the backlog bucket underneath it says whose fault the run was.
+
 Per task:
 
 - **Clean** — correct on the first `kiln check`, no fix cycles.
-- **Pass** — correct within two check-fix cycles.
-- **Weak** — three or more cycles, or it read something beyond `kiln docs`,
-  `kiln map` and the app's own files.
+- **Pass** — correct, and every cycle was guided.
+- **Weak** — two or more unguided cycles, or it read something beyond
+  `kiln docs`, `kiln map` and the app's own files. **The binary counts.**
+  `strings kiln` recovers the diagnostic table and the implementation's own
+  file names, and two of the four round-1 runs did it — task 3, which
+  self-reported, and task 2, which nobody noticed until the transcripts were
+  read back. It is reading the implementation by another route.
 - **Fail** — never landed, or landed wrong: check passes but the feature does
   not do what was asked.
 
-Record for each: the outcome, the number of cycles, every file it opened, and
-what it got wrong. Every mistake sorts into exactly one bucket — a docs fix, a
-diagnostic fix, or a language fix — and that list is the real backlog.
+Record for each: the outcome, total cycles split guided/unguided, every file it
+opened, the shell command count, and what it got wrong. `eval/record.py` pulls
+all of it from the session transcript — run it after every task, because round
+1 lost task 1's file list and task 2's cycle count to nobody writing them down.
+It cannot judge guided from unguided; it prints each cycle's diagnostics beside
+the edit that followed so that call is made against the evidence.
+
+Every mistake sorts into exactly one bucket — a docs fix, a diagnostic fix, or
+a language fix — and that list is the real backlog.
 
 ## What to watch on task 4
 

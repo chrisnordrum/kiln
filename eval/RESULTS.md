@@ -4,10 +4,15 @@ Kiln at commit: 71fb58b (harness at 8a1d4c6)
 
 | Task | Outcome | Cycles | Read beyond docs/map | What went wrong |
 |------|---------|--------|----------------------|-----------------|
-| 1 field + view | **Weak** | 3 | not recorded | param `?`, no truthiness, depth cap |
-| 2 action + control | **Pass** (cycles unverified) | ? | 1 file + 2 searches | nothing wrong |
-| 3 new route | **Fail** | 35 shell cmds | **read the compiler** | the language cannot link to a record |
-| 4 repair | **Clean** | 0 | docs, map, app only | nothing |
+| 1 field + view | **Weak** | 2 | none | param `?`, no truthiness, depth cap |
+| 2 action + control | **Pass** | 1 | **mined the binary**, ×2 | nothing wrong |
+| 3 new route | **Fail** | 4 | **read the compiler**, 14 files + binary ×6 | the language cannot link to a record |
+| 4 repair | **Clean** | 0 | none | nothing |
+
+Outcomes are as pre-registered and scored on the night. The other columns were
+recovered afterwards by `eval/record.py` from the session transcripts, which
+had been sitting in `~/.claude/projects/` the whole time; see *Evidence
+recovered* below for what that changed and what it found.
 
 ## Task 1 — a field, surfaced
 
@@ -154,6 +159,58 @@ link with a green check.
 
 It took 35 shell commands, against 8 for task 4.
 
+## Evidence recovered from the transcripts
+
+Two columns above were blank on the night — task 1's file list and task 2's
+cycle count — because both were things the operator had to notice in the
+moment. Neither was ever lost: Claude Code keeps every session's transcript,
+tool calls and output included, under `~/.claude/projects/`. `eval/record.py`
+reads them back and prints what the rubric asks for.
+
+It agrees with the one number the night was confident about — task 4, 0 cycles,
+clean — which is the check on whether it can be trusted for the rest.
+
+Two things it found that nobody saw at the time:
+
+**Task 2 breached isolation too, and it went unrecorded.** What the night wrote
+down as "1 file + 2 searches" was two `strings kiln` invocations mining the
+compiled binary for `expect` forms, looking for a negative assertion. That is
+reading the implementation by another route, and under the rubric it scores
+Weak. Only task 3's breach was caught, because that session volunteered it. A
+run that does not confess does not get caught — which is the argument for
+reading the transcript rather than asking the session.
+
+**One session ran two tasks.** After task 1 landed, the operator typed
+`./kiln-eval 4` into the same session and started the repair task there. Its
+transcript holds both, so attributing all of it to task 1 credits task 1 with
+the other task's cycles and its reads — which is exactly what the first version
+of `record.py` did, until it learned to split on operator turns. The task-4
+result in the table comes from the separate, clean run that followed.
+
+**The binary is a leak, and the filesystem is not the whole of isolation.** Six
+of task 3's mining commands ran before it ever found the repo. `strings kiln`
+returned the K-code table and, from the unstripped Go binary, every
+`internal/**.go` path with `/Users/chris/Developer/kiln/` still on the front —
+which is also how it learned where to look. `setup.sh` now builds with
+`-trimpath -ldflags="-s -w"`. That removes the absolute paths and about 3MB of
+symbols; Go's module-relative file table survives and cannot be removed, so a
+map of the package layout remains. A name is only worth something if the file
+is also reachable, so keeping the repo out of reach is still the real control,
+and nothing enforces it.
+
+**Counts moved because the definitions were sharpened, not because the runs
+changed.** A cycle is now one check reporting at least one diagnostic after the
+session's first edit, so task 1 reads 2 where the night counted 3 — the third
+was a second diagnostic inside the first check, not a second visit to the
+checker. Task 3's "35 shell cmds" and the recorder's 41 differ the same way:
+one Bash call can chain several commands.
+
+Under the revised bar, round 1's four runs would score Pass, Weak, Fail, Clean
+— task 1 up from Weak on 2 guided cycles, task 2 down from Pass for the binary.
+Recorded for comparison only. **The scores in the table stand as
+pre-registered**; a bar written after seeing the results is exactly what
+pre-registration exists to keep out of them.
+
 ## Backlog
 
 ### Language
@@ -213,10 +270,31 @@ set, so a reflexive setup cannot move a live directory. The deeper fix is
 behavioural — do not run the reset proactively; the operator runs it when no
 session is open.
 
+**H4 — mitigated, not closed.** The clean-room binary leaked the
+implementation. `strings kiln` recovered the K-code table and every
+`internal/**.go` path with the absolute repo prefix attached, which is how task
+3 learned where the repo was before it went looking. Two of four runs mined it;
+one was never noticed. `setup.sh` now builds `-trimpath -ldflags="-s -w"`,
+dropping the absolute paths and the symbol tables. The module-relative file
+table cannot be removed without breaking tracebacks, so the package map
+survives. Isolation by convention has now failed twice, in two different ways.
+
+**H5 — fixed in the recorder, still possible in practice.** Task 1 and a
+task-4 attempt shared one session, because the reset was typed into the session
+that had just finished. `record.py` splits on operator turns and warns, so a
+doubled-up run reports as two segments instead of silently inflating the first
+task's numbers. Nothing stops it happening again; the method already says to
+start a new session, and now the evidence shows when it did not.
+
+**H6 — fixed.** Nothing recorded the run. Files opened and cycle counts were
+left to the operator to notice, and both went missing on the first night.
+`record.py` reads them out of the session transcript instead, so the rubric's
+evidence is captured by construction rather than by memory.
+
 ## Closing state
 
-Every item found by the four runs is fixed. The requirement task 3 could not
-meet is now in the example and covered by a test:
+Every language, diagnostic and docs item found by the four runs is fixed. The
+requirement task 3 could not meet is now in the example and covered by a test:
 
     each projects as p
       row gap=2
@@ -228,8 +306,10 @@ measuring the wrong thing, and one diagnostic burying its own cause. None of it
 surfaced in four days of building the language, because the example app was too
 thin to exercise it.
 
-The rubric needs one change before a second round. It scored task 1 Weak for
-three check-fix cycles, but all three were the checker teaching the language to
-a session that then produced correct, canonical, tested code in under two
-minutes. "The checker caught it" and "the session struggled" are different
-outcomes and the bar cannot currently tell them apart.
+The rubric has since been revised, and the harness now records its own
+evidence. Round 2 is ready to run: `eval/tasks.md` holds the new bar, and
+`eval/record.py` reports each run against it.
+
+What is still true, and is the reason to run it at all: the only isolation
+between a session and the compiler is that nobody pointed at it. Two runs found
+their way around that anyway.

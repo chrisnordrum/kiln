@@ -32,7 +32,18 @@ if [ -d "$DEST" ]; then
 fi
 mkdir -p "$DEST"
 
-( cd "$REPO" && go build -o "$DEST/kiln" ./cmd/kiln )
+# Isolation is not just the filesystem. An ordinary Go binary carries its own
+# source paths, and the task-3 run read every internal/ path out of this one
+# with `strings kiln` before it ever found the repo. -trimpath drops the
+# absolute prefix, so the binary stops disclosing where the repo lives; -s -w
+# drop the symbol and DWARF tables, about 3MB.
+#
+# It is a reduction, not a fix. Go keeps a module-relative file table for
+# tracebacks, so `kiln/internal/check/route.go` survives and cannot be removed.
+# That leaves a map of the implementation, not the implementation: a name is
+# only worth something if the file is also reachable. Keeping the repo out of
+# reach is still the control that matters, and nothing here enforces it.
+( cd "$REPO" && go build -trimpath -ldflags="-s -w" -o "$DEST/kiln" ./cmd/kiln )
 cp -r "$REPO/examples/tasks" "$DEST/app"
 
 if [ "$TASK" = "4" ]; then
