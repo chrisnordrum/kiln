@@ -9,10 +9,13 @@ package server
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html"
+	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 
 	"kiln/internal/ast"
@@ -29,14 +32,65 @@ var styleCSS string
 
 // Server holds the program and the store every request shares.
 type Server struct {
-	p  *ast.Program
-	mu sync.Mutex
-	r  *runner.Runner
+	p    *ast.Program
+	mu   sync.Mutex
+	r    *runner.Runner
+	data string // file to keep the store in, empty for in-memory only
 }
 
 // New creates a server over a fresh in-memory store.
 func New(p *ast.Program) *Server {
 	return &Server{p: p, r: runner.New(p)}
+}
+
+// UseFile makes the server durable: it reads the store from path if that file
+// exists, and writes it back after every action. A missing file is not an
+// error — it is the first run, and the caller seeds instead.
+//
+// Only `kiln dev` calls this. `kiln test` and `kiln snap` start empty every
+// time on purpose.
+func (s *Server) UseFile(path string) (loaded bool, err error) {
+	b, err := os.ReadFile(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		s.data = path
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if err := s.r.Store().Restore(b); err != nil {
+		// The file is adopted only once it has been read. A caller that
+		// carried on past this error would otherwise save over the file it
+		// could not understand, which is the one copy of the data.
+		return false, fmt.Errorf("%s: %w", path, err)
+	}
+	s.data = path
+	return true, nil
+}
+
+// Save writes the store out, if the server was given a file. Callers already
+// holding the lock use save.
+func (s *Server) Save() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.save()
+}
+
+func (s *Server) save() error {
+	if s.data == "" {
+		return nil
+	}
+	b, err := s.r.Store().Snapshot()
+	if err != nil {
+		return err
+	}
+	// Write beside the file and rename over it, so an interrupted save cannot
+	// leave a half-written file where the data used to be.
+	tmp := s.data + ".writing"
+	if err := os.WriteFile(tmp, b, 0o644); err != nil {
+		return err
+	}
+	return os.Rename(tmp, s.data)
 }
 
 // Seed inserts a row before serving, so `kiln dev` starts with something to
@@ -135,6 +189,13 @@ func (s *Server) handleAction(w http.ResponseWriter, req *http.Request) {
 		}
 		writeJSON(w, actionResponse{Error: err.Error()})
 		return
+	}
+	// The action has already changed the store, so a failed save is not a
+	// failed action — it is the file and the running server disagreeing, which
+	// the developer has to be told about rather than discover at the next
+	// restart.
+	if err := s.save(); err != nil {
+		log.Printf("WARNING: %s is now behind the running store: %v", s.data, err)
 	}
 
 	out := actionResponse{}

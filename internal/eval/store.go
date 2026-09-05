@@ -54,17 +54,12 @@ func (s *Store) Insert(table string, row Row) (Value, error) {
 		if _, given := out[f.Name]; given {
 			continue
 		}
-		switch {
-		case f.Type == "id":
+		if f.Type == "id" {
 			s.nextID[table]++
 			out[f.Name] = s.nextID[table]
-		case f.DefaultNow:
-			out[f.Name] = s.Now
-		case f.Default != nil:
-			out[f.Name] = literal(f.Default)
-		default:
-			out[f.Name] = nil
+			continue
 		}
+		out[f.Name] = declaredDefault(f, s.Now)
 	}
 	// An explicit id still advances the counter, so a later insert cannot
 	// collide with a seeded row.

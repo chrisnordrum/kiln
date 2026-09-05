@@ -151,7 +151,8 @@ Route tests: `visit /path` then `expect text "..."`, `expect no text "..."`
     kiln snap           render every route a test visits, as stable text;
                         --check diffs the committed snapshots
     kiln test           run tests/
-    kiln dev            dev server
+    kiln dev            dev server; --data <file> keeps the store
+                        across restarts
     kiln new route|table|action <name>
     kiln docs [--section <name>]
     kiln explain K021   what an error code means and how to fix it

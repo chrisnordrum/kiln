@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"kiln/internal/ast"
 	"kiln/internal/check"
 	"kiln/internal/diag"
 	"kiln/internal/eval"
@@ -68,7 +69,7 @@ route login
       head 1 "Sign in"
 `
 
-func newServer(t *testing.T, signedIn bool) *Server {
+func program(t *testing.T) *ast.Program {
 	t.Helper()
 	var d diag.List
 	p := parse.Program([]parse.File{{Path: "a.kiln", Src: app}}, &d)
@@ -79,7 +80,12 @@ func newServer(t *testing.T, signedIn bool) *Server {
 		shown, _ := d.Resolved()
 		t.Fatalf("fixture is not a valid program: %+v", shown)
 	}
-	s := New(p)
+	return p
+}
+
+func newServer(t *testing.T, signedIn bool) *Server {
+	t.Helper()
+	s := New(program(t))
 	s.Seed("User", map[string]eval.Value{"id": int64(1), "name": "Ada"})
 	s.Seed("Task", map[string]eval.Value{"id": int64(1), "owner": int64(1), "title": "Ship it"})
 	if signedIn {

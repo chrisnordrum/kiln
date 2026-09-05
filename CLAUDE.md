@@ -88,6 +88,17 @@ any of them fails the suite.
   Counting it rejected a card holding a list of rows. **This limit has produced
   two false positives and no true ones: if it fires again on a reasonable
   layout, delete it rather than raise it a third time.**
+- **Persistence is something the caller asks for, not something the store
+  does.** A `Store` that loaded itself would make `kiln test` depend on what
+  ran before it and `kiln snap` diff against yesterday. `Snapshot`/`Restore`
+  are inert until `kiln dev` calls them, which is why the durability work
+  changed no test, check or snapshot.
+- **The data file carries no type tags.** JSON has one number type and no
+  timestamp, so a round trip would turn every id into a float and every `at`
+  into a string. Rather than wrap each value in `{"t":...,"v":...}`, the schema
+  puts the types back on the way in — it already knows `created` is `at`, and
+  it is the spec either way. The file stays something you can open and read,
+  and a file that disagrees with the schema loses.
 - **K040 reports once per route and session field,** naming every action
   affected. Keyed per action, one missing guard produced one diagnostic per
   action that tripped over it — the cascade the machinery exists to prevent.
@@ -96,8 +107,13 @@ any of them fails the suite.
 
 Working end to end: lexer, parser, canonical formatter, whole-program checker,
 evaluator, text and HTML renderers, test runner, dev server, and the three
-orientation commands. 164 tests, zero dependencies, reference at 56% of its
+orientation commands. 175 tests, zero dependencies, reference at 57% of its
 3,000-token budget.
+
+The store persists on request: `Store.Snapshot` and `Store.Restore` move it to
+and from plain JSON, and `kiln dev --data <file>` loads at startup and saves
+after every action. `kiln test` and `kiln snap` are untouched by it and still
+start empty every time.
 
 The language was tested by running four cold Claude Code sessions against it,
 each given only `kiln docs` and a feature request. `eval/` holds the method,
@@ -115,16 +131,14 @@ change lands in `examples/tasks` or it is not done.
 ### Next, in order
 
 1. **A second eval round.** Re-run the four tasks against the fixed language.
-   Fix the rubric first: it scored task 1 Weak for three check-fix cycles, but
-   all three were the checker teaching the language to a session that then
-   produced correct, tested code in under two minutes. "The checker caught it"
-   and "the session struggled" are different outcomes and the bar cannot tell
-   them apart. Also record which files each session opens — that is the
-   evidence for "one screen, one read" and only one run captured it.
-2. **Persistence.** The store is in memory behind `eval.Store`; nothing else
-   depends on how it persists. No test, check or snapshot needs it, which is
-   why it has stayed deferred.
-3. **The `kiln docs` skill,** so a session loads the language without being
+   The rubric is fixed — it now counts *unguided* cycles, where the session did
+   something other than apply the diagnostic's fix line, so a checker doing its
+   job no longer reads as a session struggling. `eval/record.py` pulls the
+   outcome, the cycles, the files opened and any isolation breach out of the
+   session transcript, so round 1's habit of losing evidence to memory cannot
+   repeat. Read `eval/RESULTS.md` § *Evidence recovered* first: reading the
+   round-1 transcripts back found a breach nobody had noticed.
+2. **The `kiln docs` skill,** so a session loads the language without being
    told to. Worth more now than before, since the hole it would have taught
    around is closed.
 

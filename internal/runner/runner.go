@@ -30,6 +30,10 @@ func New(p *ast.Program) *Runner {
 	return &Runner{P: p, E: eval.New(p), Session: map[string]eval.Value{}}
 }
 
+// Store is the data the runner is acting on, for a caller that needs to
+// persist it or read it whole.
+func (r *Runner) Store() *eval.Store { return r.E.S }
+
 // env builds the environment an expression sees at the top of a request.
 func (r *Runner) env() *eval.Env {
 	return &eval.Env{
