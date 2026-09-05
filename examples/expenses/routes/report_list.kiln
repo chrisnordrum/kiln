@@ -1,0 +1,18 @@
+route report_list
+  path /reports
+  guard session.user else redirect /login
+  data
+    reports many Report where owner == session.user order created desc
+  view
+    page title="Expense reports"
+      head 1 "Expense reports"
+      text plural(count(reports), "report", "reports")
+      when count(reports) == 0
+        empty "No reports yet."
+      each reports as r
+        row gap=2
+          link r.title to="/reports/" + r.id
+          badge r.status
+      form do=add_report
+        input title text required label="New report title" max=120
+        submit "New report"

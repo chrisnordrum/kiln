@@ -31,6 +31,7 @@ internal/server   HTTP
 internal/inspect  kiln map and kiln where
 internal/diag     the diagnostic contract
 examples/tasks    the program the toolchain is built toward
+examples/expenses an expense tracker: enums, money, dates, column totals
 ```
 
 Parsing is permissive about meaning and strict about shape; every "does this
@@ -41,13 +42,15 @@ next reports references.
 
 ```
 gofmt -w . && go vet ./... && go test ./...
-go build -o kiln ./cmd/kiln && ./kiln fmt examples/tasks && ./kiln check examples/tasks
-./kiln test examples/tasks && ./kiln snap --check examples/tasks
+go build -o kiln ./cmd/kiln
+for e in examples/*; do ./kiln fmt "$e" && ./kiln check "$e" &&
+  ./kiln test "$e" && ./kiln snap --check "$e"; done
 ```
 
-The example must stay canonical, check clean, pass its tests and match its
-snapshots. `internal/cli/e2e_test.go` asserts all four, so a change that breaks
-any of them fails the suite.
+Every example must stay canonical, check clean, pass its tests and match its
+snapshots. `internal/cli/e2e_test.go` asserts all four against every directory
+under `examples/`, discovered rather than listed, so adding one puts it under
+the same guarantee and a change that breaks any of them fails the suite.
 
 ## Adding to the language
 
@@ -99,6 +102,23 @@ any of them fails the suite.
   puts the types back on the way in — it already knows `created` is `at`, and
   it is the spec either way. The file stays something you can open and read,
   and a file that disagrees with the schema loses.
+- **An aggregate reads one named column, never a whole row.** `sum(items)`
+  added every numeric cell of every row — the primary key and the foreign keys
+  with the rest — and `join(items, ", ")` returned the ids. Both answered a
+  question nobody asked, checked clean, and rendered plausibly; a two-line
+  expense report totalled $59.75 instead of $54.75. `list.field` now yields a
+  column and the whole-list form is a K030, because the alternative is a wrong
+  number that looks right.
+- **An enum value is a quoted string everywhere, the schema default
+  included.** It used to have two spellings and no writable one: a bare `todo`
+  in a default resolved as a name and reported K021, and `= "todo"` failed a
+  membership test that compared the quoted spelling and then suggested the
+  bare one. The two diagnostics pointed at each other. `set` and `where` had
+  always taken the quoted form, so that is the one that stayed.
+- **A fixture is coerced in `Runner.Seed`, not by its caller.** When only the
+  test runner coerced, an `at` column held a time under `kiln test` and a raw
+  string in the browser, so every date function rendered correctly in the
+  snapshot and blank on the page. One seeding path, one set of types.
 - **K040 reports once per route and session field,** naming every action
   affected. Keyed per action, one missing guard produced one diagnostic per
   action that tripped over it — the cascade the machinery exists to prevent.
@@ -107,8 +127,17 @@ any of them fails the suite.
 
 Working end to end: lexer, parser, canonical formatter, whole-program checker,
 evaluator, text and HTML renderers, test runner, dev server, and the three
-orientation commands. 175 tests, zero dependencies, reference at 57% of its
+orientation commands. 187 tests, zero dependencies, reference at 58% of its
 3,000-token budget.
+
+A second app was written against the language as a check on the first —
+`examples/expenses`, an expense tracker, chosen to exercise what
+`examples/tasks` never touched. It found four defects in one sitting: `sum`
+totalling every column, enum defaults being unwritable, dev-server seeds
+skipping coercion so dates rendered blank in the browser only, and one bad
+parameter reporting a diagnostic per enum value. All four are fixed and pinned
+by tests, and both examples now carry an enum default and a column total so
+they stay fixed. It cost about an hour, which is the argument for a third app.
 
 The store persists on request: `Store.Snapshot` and `Store.Restore` move it to
 and from plain JSON, and `kiln dev --data <file>` loads at startup and saves
@@ -126,7 +155,7 @@ The single most important finding: `kiln check` was green on a page where every
 link 404'd. Four days of building never hit it because the example app had one
 data route and no navigation between records. **The example is the spec in
 practice.** Anything the example does not exercise is unverified, so a language
-change lands in `examples/tasks` or it is not done.
+change lands in an example or it is not done.
 
 ### Next, in order
 

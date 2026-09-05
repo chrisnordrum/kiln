@@ -1,0 +1,8 @@
+action submit_report
+  in
+    id ref Report
+  allow session.user == Report[id].owner
+  do
+    set Report[id].status = "submitted"
+  after
+    refresh

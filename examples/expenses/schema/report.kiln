@@ -1,0 +1,17 @@
+table Report
+  id id
+  owner ref User on delete cascade
+  title text max 120
+  status enum draft submitted approved = "draft"
+  created at now
+  index owner, created
+
+table Expense
+  id id
+  report ref Report on delete cascade
+  description text max 200
+  category enum travel meals supplies software other = "other"
+  amount num
+  spent_on at
+  created at now
+  index report, spent_on

@@ -1,0 +1,8 @@
+action add_report
+  in
+    title text max 120
+  allow session.user != null
+  do
+    new Report owner=session.user title=title
+  after
+    refresh

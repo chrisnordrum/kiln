@@ -1,0 +1,26 @@
+test "the report page totals its expenses"
+  seed User email="ada@example.com" id=1 name="Ada"
+  seed User email="bob@example.com" id=2 name="Bob"
+  seed Report id=1 owner=1 status="draft" title="September travel"
+  seed Expense amount=42.5 category="travel" description="Taxi to site" id=1 report=1 spent_on="2026-08-30T00:00:00Z"
+  seed Expense amount=12.25 category="meals" description="Lunch" id=2 report=1 spent_on="2026-09-01T00:00:00Z"
+  as user=1
+  visit /reports/1
+  expect text "Taxi to site"
+  expect text "September travel"
+
+test "an owner adds an expense"
+  seed User email="ada@example.com" id=1 name="Ada"
+  seed User email="bob@example.com" id=2 name="Bob"
+  seed Report id=1 owner=1 status="draft" title="September travel"
+  as user=1
+  call add_expense amount=8.75 category="supplies" description="Notebook" report=1 spent_on="2026-09-02T00:00:00Z"
+  expect Expense[1].description == "Notebook"
+  expect denied when as user=2
+
+test "submitting moves the status"
+  seed User email="ada@example.com" id=1 name="Ada"
+  seed Report id=1 owner=1 status="draft" title="September travel"
+  as user=1
+  call submit_report id=1
+  expect Report[1].status == "submitted"

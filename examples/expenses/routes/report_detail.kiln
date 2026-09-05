@@ -1,0 +1,32 @@
+route report_detail
+  path /reports/:id
+  guard session.user else redirect /login
+  data
+    report one Report where id == params.id
+    expenses many Expense where report == params.id order spent_on desc
+  view
+    page title=report.title
+      head 1 report.title
+      row gap=3
+        badge report.status
+        text plural(count(expenses), "expense", "expenses")
+        text money(sum(expenses.amount))
+      when count(expenses) == 0
+        empty "No expenses yet."
+      each expenses as e
+        row gap=2
+          text e.description
+          badge e.category
+          text money(e.amount)
+          text ago(e.spent_on)
+          button "Delete" confirm="Delete this expense?" do=delete_expense id=e.id
+      form do=add_expense report=params.id
+        input description text required label="Description" max=200
+        input category text required label="Category" max=20
+        input amount num required label="Amount"
+        input spent_on at required label="Date"
+        submit "Add expense"
+      when report.status == "draft"
+        button "Submit report" do=submit_report id=report.id
+      else
+        text "Submitted."

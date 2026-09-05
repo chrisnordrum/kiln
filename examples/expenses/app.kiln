@@ -1,0 +1,3 @@
+app expenses
+  title "Expenses"
+  session user ref User

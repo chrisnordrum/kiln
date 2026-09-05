@@ -1,0 +1,8 @@
+action delete_expense
+  in
+    id ref Expense
+  allow session.user == Expense[id].report.owner
+  do
+    del Expense[id]
+  after
+    refresh

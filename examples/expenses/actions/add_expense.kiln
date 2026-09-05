@@ -1,0 +1,12 @@
+action add_expense
+  in
+    report ref Report
+    description text max 200
+    category text max 20
+    amount num
+    spent_on at
+  allow session.user == Report[report].owner
+  do
+    new Expense amount=amount category=category description=description report=report spent_on=spent_on
+  after
+    refresh

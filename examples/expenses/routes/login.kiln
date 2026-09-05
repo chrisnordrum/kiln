@@ -1,0 +1,8 @@
+route login
+  path /login
+  view
+    page title="Sign in"
+      head 1 "Sign in"
+      form do=sign_in
+        input email text required max=200
+        submit "Sign in"
