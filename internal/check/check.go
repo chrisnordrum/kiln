@@ -218,6 +218,10 @@ func (c *checker) checkActions() {
 func (c *checker) checkAction(a *ast.Action) {
 	sc := &scope{c: c, vars: map[string]Type{}}
 	for _, p := range a.In {
+		if p.Type == "enum" && len(p.Enum) == 0 {
+			c.errf(p.Pos, "K011", "enum parameter %s has no values", p.Name).
+				fix("write: " + p.Name + " enum a b c")
+		}
 		if !contains(ParamTypeNames, p.Type) {
 			c.errf(p.Pos, "K021", "%q is not a parameter type", p.Type).
 				near(diag.Suggest(p.Type, ParamTypeNames)).

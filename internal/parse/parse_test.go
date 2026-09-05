@@ -250,12 +250,12 @@ func TestTestsParse(t *testing.T) {
 	}
 }
 
-// An enum is not a parameter type, and its values are ordinary words, so the
-// old loop reported every one of them as a bad modifier: five diagnostics for
-// one mistake, none of which named the actual problem.
-func TestEnumParameterReportsOnce(t *testing.T) {
+// An enum parameter carries its values, so the boundary can refuse anything
+// outside them. Reading them is also what stopped the old cascade: the values
+// are ordinary words, and each one used to be reported as a bad modifier.
+func TestEnumParameterCarriesItsValues(t *testing.T) {
 	var d diag.List
-	Program([]File{{Path: "a.kiln", Src: `
+	p := Program([]File{{Path: "a.kiln", Src: `
 action set_status
   in
     id ref Task
@@ -265,13 +265,74 @@ action set_status
     refresh
 `}}, &d)
 	shown, _ := d.Resolved()
+	if len(shown) != 0 {
+		t.Fatalf("want a clean parse, got %+v", shown)
+	}
+	param := p.Actions[0].In[1]
+	if param.Type != "enum" {
+		t.Fatalf("type is %q, want enum", param.Type)
+	}
+	if got := strings.Join(param.Enum, " "); got != "todo doing done" {
+		t.Errorf("values are %q, want \"todo doing done\"", got)
+	}
+}
+
+// An enum's values stop at the modifiers that may follow them, or `max` would
+// be read as one more value.
+func TestEnumParameterStopsAtAModifier(t *testing.T) {
+	var d diag.List
+	p := Program([]File{{Path: "a.kiln", Src: `
+action set_status
+  in
+    status enum todo done max 20
+  allow true
+  do
+    refresh
+`}}, &d)
+	shown, _ := d.Resolved()
+	if len(shown) != 0 {
+		t.Fatalf("want a clean parse, got %+v", shown)
+	}
+	param := p.Actions[0].In[0]
+	if got := strings.Join(param.Enum, " "); got != "todo done" {
+		t.Errorf("values are %q, want \"todo done\"", got)
+	}
+	if param.Max != 20 {
+		t.Errorf("max is %d, want 20", param.Max)
+	}
+}
+
+// One stray word is one mistake. It used to report every word after it too.
+func TestOneBadParameterIsOneDiagnostic(t *testing.T) {
+	var d diag.List
+	Program([]File{{Path: "a.kiln", Src: `
+action set_status
+  in
+    status text wibble wobble wubble
+  allow true
+  do
+    refresh
+`}}, &d)
+	shown, _ := d.Resolved()
 	if len(shown) != 1 {
 		t.Fatalf("want exactly 1 diagnostic, got %d: %+v", len(shown), shown)
 	}
-	if !strings.Contains(shown[0].Msg, "cannot be an enum") {
-		t.Errorf("message should name the real problem, got %q", shown[0].Msg)
-	}
-	if !strings.Contains(shown[0].Fix, "status text") {
-		t.Errorf("fix should say what to write instead, got %q", shown[0].Fix)
+}
+
+// An enum with no values would accept everything, which is the opposite of
+// what declaring one is for.
+func TestEnumParameterNeedsValues(t *testing.T) {
+	var d diag.List
+	Program([]File{{Path: "a.kiln", Src: `
+action set_status
+  in
+    status enum
+  allow true
+  do
+    refresh
+`}}, &d)
+	shown, _ := d.Resolved()
+	if len(shown) != 1 || shown[0].Code != "K011" {
+		t.Fatalf("want one K011, got %+v", shown)
 	}
 }

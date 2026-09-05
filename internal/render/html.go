@@ -25,6 +25,11 @@ func HTML(e *eval.Evaluator, r *ast.Route, env *eval.Env) string {
 type htmlWriter struct {
 	e  *eval.Evaluator
 	sb strings.Builder
+	// form is the action of the form currently being written, so a select
+	// inside it can offer that action's enum values. The options belong to
+	// the action, not to the view, which is why the view does not repeat
+	// them.
+	form *ast.Action
 }
 
 func (w *htmlWriter) pad(depth int) { w.sb.WriteString(strings.Repeat("  ", depth)) }
@@ -126,7 +131,10 @@ func (w *htmlWriter) node(n *ast.Node, env *eval.Env, depth int) {
 	case "form":
 		w.pad(depth)
 		fmt.Fprintf(&w.sb, "<form%s%s>\n", w.classAttr(n), w.actionAttrs(n, env))
+		outer := w.form
+		w.form = w.action(n)
 		w.nodes(n.Children, env, depth+1)
+		w.form = outer
 		w.close("form", depth)
 	case "input":
 		w.pad(depth)
@@ -245,11 +253,17 @@ func (w *htmlWriter) label(n *ast.Node, env *eval.Env) string {
 
 // options renders a select's choices from the enum the field declares.
 func (w *htmlWriter) options(n *ast.Node, env *eval.Env) string {
+	var b strings.Builder
 	a, ok := n.Attr("from")
 	if !ok {
-		return ""
+		// No from=: the options are the enum values of the parameter this
+		// field supplies, which the checker has already proved is an enum.
+		for _, v := range w.selectEnum(n) {
+			esc := html.EscapeString(v)
+			fmt.Fprintf(&b, "<option%s>%s</option>", attr("value", esc), esc)
+		}
+		return b.String()
 	}
-	var b strings.Builder
 	if list, ok := w.e.Eval(a.Value, env).(eval.List); ok {
 		for _, row := range list.Rows {
 			id := html.EscapeString(eval.Text(row["id"]))
@@ -257,6 +271,37 @@ func (w *htmlWriter) options(n *ast.Node, env *eval.Env) string {
 		}
 	}
 	return b.String()
+}
+
+// selectEnum finds the values a bare select offers.
+func (w *htmlWriter) selectEnum(n *ast.Node) []string {
+	if w.form == nil || len(n.Args) == 0 {
+		return nil
+	}
+	name, ok := n.Args[0].(*ast.Name)
+	if !ok {
+		return nil
+	}
+	for _, p := range w.form.In {
+		if p.Name == name.String() {
+			return p.Enum
+		}
+	}
+	return nil
+}
+
+// action resolves a node's do= to the action it names.
+func (w *htmlWriter) action(n *ast.Node) *ast.Action {
+	a, ok := n.Attr("do")
+	if !ok {
+		return nil
+	}
+	name, ok := a.Value.(*ast.Name)
+	if !ok {
+		return nil
+	}
+	act, _ := w.e.P.Action(name.String())
+	return act
 }
 
 func requiredAttr(n *ast.Node) string {

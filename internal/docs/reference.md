@@ -78,9 +78,11 @@ Modifiers: `?` nullable, `= v` default, `at now` defaults to insert time.
       after
         refresh
 
-`in` declares typed params; callers must supply every one. `?` marks one
-nullable, which is how an empty form field arrives — without it a blank input
-stores "" and every reader has to handle both empties.
+`in` declares typed params; callers must supply every one. Types are `text`
+`int` `num` `bool` `at` `ref Table` `enum a b c`; a value outside an enum's set
+is refused at the boundary, before `allow` runs. `?` marks one nullable, which
+is how an empty form field arrives — without it a blank input stores "" and
+every reader has to handle both empties.
 `allow` must be true or the call is denied (enforced at the boundary).
 `do` statements: `set T[e].f = e` `set session.x = e` `new T f=e ...` `del T[e]`
               `send effect to=e ...`
@@ -121,7 +123,8 @@ Action:  `link "label" to=/path` `button "label" do=action arg=e [confirm="msg"]
          `to="/projects/" + p.id`. A field name inside quotes is text, not a
          value, so `to="/projects/p.id"` is the same dead link on every row.
          `check value=e do=action ...` `form do=action arg=e`
-         `input name type [required] [max=n] [label="..."]` `select name from=list`
+         `input name type [required] [max=n] [label="..."]`
+         `select name` offers the action's enum values; `from=list` its rows
          `area name [rows=n]` `submit "label"`
 
 Attributes: `gap=0..6` `pad=0..6` `align=start|center|end` `style=<token>`

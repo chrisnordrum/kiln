@@ -22,7 +22,7 @@ route report_detail
           button "Delete" confirm="Delete this expense?" do=delete_expense id=e.id
       form do=add_expense report=params.id
         input description text required label="Description" max=200
-        input category text required label="Category" max=20
+        select category label="Category"
         input amount num required label="Amount"
         input spent_on at required label="Date"
         submit "Add expense"

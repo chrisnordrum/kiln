@@ -184,6 +184,8 @@ func paramType(p *ast.Param) Type {
 		return tAt
 	case "ref":
 		return refTo(p.Ref)
+	case "enum":
+		return Type{Kind: Enum, Values: p.Enum}
 	}
 	return tUnknown
 }
@@ -192,4 +194,4 @@ func paramType(p *ast.Param) Type {
 var FieldTypeNames = []string{"id", "text", "int", "num", "bool", "at", "enum", "ref"}
 
 // ParamTypeNames are the types an action parameter may declare.
-var ParamTypeNames = []string{"text", "int", "num", "bool", "at", "ref"}
+var ParamTypeNames = []string{"text", "int", "num", "bool", "at", "ref", "enum"}

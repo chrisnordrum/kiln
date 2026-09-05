@@ -175,8 +175,9 @@ func (a *Action) ParamNames() []string {
 type Param struct {
 	Pos
 	Name     string
-	Type     string // text, int, num, bool, at, ref
-	Ref      string // target table, when Type is ref
+	Type     string   // text, int, num, bool, at, ref, enum
+	Ref      string   // target table, when Type is ref
+	Enum     []string // permitted values, when Type is enum
 	Max      int
 	Nullable bool
 }

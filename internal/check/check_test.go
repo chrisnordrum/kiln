@@ -428,6 +428,39 @@ route r
     page
       head 9 "Too deep"`, "K030"},
 
+		{"a bare select needs an enum parameter", `
+action note_it
+  in
+    body text max 200
+  allow true
+  do
+    refresh
+
+route r
+  path /r
+  view
+    page
+      form do=note_it
+        select body
+        submit "Go"`, "K030"},
+
+		{"a bare select must name a parameter", `
+action note_it
+  in
+    body text max 200
+  allow true
+  do
+    refresh
+
+route r
+  path /r
+  view
+    page
+      form do=note_it
+        input body text
+        select nope
+        submit "Go"`, "K031"},
+
 		{"stdlib arity", `
 route r
   path /r

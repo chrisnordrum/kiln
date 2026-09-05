@@ -7,6 +7,7 @@ package runner
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"kiln/internal/ast"
@@ -85,6 +86,14 @@ func (r *Runner) SignIn(name string, v eval.Value) { r.Session[name] = v }
 // Call runs an action with its allow rule enforced. The rule is evaluated
 // before any statement executes, so a denied call leaves the store untouched.
 func (r *Runner) Call(a *ast.Action, args map[string]eval.Value) error {
+	// An enum parameter is checked before the allow rule, not after: a value
+	// outside the set is a malformed call, and it should be refused whether
+	// or not the caller would have been permitted to make a well-formed one.
+	// Doing it here rather than in the caller is what keeps a test and a
+	// browser request agreeing on what the action accepts.
+	if err := checkEnums(a, args); err != nil {
+		return err
+	}
 	env := r.env()
 	for k, v := range args {
 		env.Vars[k] = v
@@ -228,4 +237,23 @@ func truthy(v eval.Value) bool {
 		return len(x.Rows) > 0
 	}
 	return true
+}
+
+// checkEnums refuses an argument outside its parameter's permitted values.
+func checkEnums(a *ast.Action, args map[string]eval.Value) error {
+	for _, p := range a.In {
+		if p.Type != "enum" {
+			continue
+		}
+		v, given := args[p.Name]
+		if !given || (p.Nullable && v == nil) {
+			continue
+		}
+		got := eval.Text(v)
+		if !slices.Contains(p.Enum, got) {
+			return fmt.Errorf("%s: %q is not one of: %s",
+				p.Name, got, strings.Join(p.Enum, ", "))
+		}
+	}
+	return nil
 }

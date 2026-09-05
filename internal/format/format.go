@@ -181,6 +181,9 @@ func action(a *ast.Action) string {
 					if p.Type == "ref" {
 						parts = append(parts, p.Ref)
 					}
+					if p.Type == "enum" {
+						parts = append(parts, p.Enum...)
+					}
 					if p.Nullable {
 						parts = append(parts, "?")
 					}

@@ -27,6 +27,7 @@ table Task
   done bool = false
   rank int
   due at?
+  status enum todo doing done = "todo"
 
 action toggle
   in
@@ -35,6 +36,16 @@ action toggle
   allow session.user == Task[id].owner
   do
     set Task[id].done = done
+  after
+    refresh
+
+action set_status
+  in
+    id ref Task
+    status enum todo doing done
+  allow true
+  do
+    set Task[id].status = status
   after
     refresh
 
@@ -411,5 +422,32 @@ func TestSeedCoercesToTheDeclaredType(t *testing.T) {
 	}
 	if row["rank"] != int64(3) {
 		t.Errorf("rank is %#v, want int64(3)", row["rank"])
+	}
+}
+
+// An enum parameter is a closed set, and the boundary is where that has to
+// hold: a form can be bypassed, so the check cannot live in the view. It runs
+// before the allow rule, because a value outside the set is a malformed call
+// whether or not the caller would have been permitted to make a good one.
+func TestEnumArgumentOutsideTheSetIsRefused(t *testing.T) {
+	r := setup(t)
+	r.SignIn("user", int64(1))
+	act := action(t, r, "set_status")
+
+	if err := r.Call(act, map[string]eval.Value{"id": int64(1), "status": "doing"}); err != nil {
+		t.Fatalf("a declared value was refused: %v", err)
+	}
+	err := r.Call(act, map[string]eval.Value{"id": int64(1), "status": "deleted"})
+	if err == nil {
+		t.Fatal("a value outside the enum was accepted")
+	}
+	for _, want := range []string{"status", "deleted", "todo"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error %q should mention %q", err, want)
+		}
+	}
+	// The refusal must not be reported as a permission failure.
+	if err == Denied {
+		t.Error("an out-of-set value read as Denied, which hides a malformed call")
 	}
 }

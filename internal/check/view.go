@@ -49,7 +49,7 @@ var elements = map[string]element{
 	"check":  {attrs: []string{"do", "value"}, required: []string{"do", "value"}, actionArgs: true},
 	"form":   {attrs: []string{"do"}, required: []string{"do"}, actionArgs: true, container: true},
 	"input":  {minArgs: 2, maxArgs: 3, attrs: []string{"max", "label", "placeholder"}},
-	"select": {minArgs: 1, maxArgs: 1, attrs: []string{"from", "label"}, required: []string{"from"}},
+	"select": {minArgs: 1, maxArgs: 1, attrs: []string{"from", "label"}},
 	"area":   {minArgs: 1, maxArgs: 1, attrs: []string{"rows", "label"}},
 	"submit": {minArgs: 1, maxArgs: 1},
 }

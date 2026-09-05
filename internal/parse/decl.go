@@ -1,8 +1,6 @@
 package parse
 
 import (
-	"strings"
-
 	"kiln/internal/ast"
 	"kiln/internal/diag"
 	"kiln/internal/lex"
@@ -52,7 +50,11 @@ func parseAction(line *lex.Line, d *diag.List) *ast.Action {
 }
 
 // paramTypes are the types an action input may declare.
-var paramTypes = []string{"text", "int", "num", "bool", "at", "ref"}
+var paramTypes = []string{"text", "int", "num", "bool", "at", "ref", "enum"}
+
+// isParamKeyword stops an enum's value list at the modifiers that may follow
+// it, so `status enum todo done max 20` does not read "max" as a value.
+func isParamKeyword(word string) bool { return word == "max" }
 
 // parseParam reads one action input: `name type [ref Table] [max N]`.
 func parseParam(line *lex.Line, d *diag.List) *ast.Param {
@@ -69,14 +71,15 @@ func parseParam(line *lex.Line, d *diag.List) *ast.Param {
 		p.Ref = c.next().Text
 	}
 	p.Nullable = c.accept("?")
-	// An enum is not a parameter type. Saying so once matters: the values that
-	// follow it are all ordinary words, so reporting them as bad modifiers
-	// produced one diagnostic per enum value and never named the real problem.
 	if p.Type == "enum" {
-		d.Add(diag.Diag{Code: "K010", File: line.File, Line: line.Num,
-			Msg: sprintf("parameter %s cannot be an enum", p.Name),
-			Fix: "parameters take " + strings.Join(paramTypes, ", ") + "; keep the enum on the table and take `" + p.Name + " text` here"})
-		return p
+		for !c.eof() && c.peek().Kind == lex.Ident && !isParamKeyword(c.peek().Text) {
+			p.Enum = append(p.Enum, c.next().Text)
+		}
+		if len(p.Enum) == 0 {
+			d.Add(diag.Diag{Code: "K011", File: line.File, Line: line.Num,
+				Msg: sprintf("enum parameter %s has no values", p.Name),
+				Fix: "write: " + p.Name + " enum a b c"})
+		}
 	}
 	for !c.eof() {
 		if c.acceptWord("max") {

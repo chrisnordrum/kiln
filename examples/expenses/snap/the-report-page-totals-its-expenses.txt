@@ -22,7 +22,7 @@ page title="September travel"
     button "Delete" do=delete_expense(id=1) confirm="Delete this expense?"
   form do=add_expense(report="1")
     input description text required label="Description" max=200
-    input category text required label="Category" max=20
+    select category label="Category" options="travel, meals, supplies, software, other"
     input amount num required label="Amount"
     input spent_on at required label="Date"
     submit "Add expense"

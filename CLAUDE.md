@@ -119,6 +119,17 @@ the same guarantee and a change that breaks any of them fails the suite.
   test runner coerced, an `at` column held a time under `kiln test` and a raw
   string in the browser, so every date function rendered correctly in the
   snapshot and blank on the page. One seeding path, one set of types.
+- **A `select` with no `from=` takes its options from the action.** The
+  alternative was repeating the enum's values in the view, where they could
+  drift from the ones the call is checked against. The form already names its
+  action, so there is one list and it is the authoritative one. `from=<list>`
+  still offers a query's rows.
+- **An enum argument is refused in `Runner.Call`, before the allow rule.** A
+  value outside the set is a malformed call, not a permission failure, and it
+  must be refused whether or not the caller would have been allowed to make a
+  well-formed one. Putting it there rather than in the server is what keeps a
+  test and a browser request agreeing on what the action accepts — the same
+  mistake seeding made.
 - **K040 reports once per route and session field,** naming every action
   affected. Keyed per action, one missing guard produced one diagnostic per
   action that tripped over it — the cascade the machinery exists to prevent.
@@ -127,7 +138,7 @@ the same guarantee and a change that breaks any of them fails the suite.
 
 Working end to end: lexer, parser, canonical formatter, whole-program checker,
 evaluator, text and HTML renderers, test runner, dev server, and the three
-orientation commands. 187 tests, zero dependencies, reference at 58% of its
+orientation commands. 201 tests, zero dependencies, reference at 59% of its
 3,000-token budget.
 
 A second app was written against the language as a check on the first —
@@ -138,6 +149,13 @@ skipping coercion so dates rendered blank in the browser only, and one bad
 parameter reporting a diagnostic per enum value. All four are fixed and pinned
 by tests, and both examples now carry an enum default and a column total so
 they stay fixed. It cost about an hour, which is the argument for a third app.
+
+It also found two things the language could not say rather than said wrongly:
+an action parameter could not be an enum, so a closed set arrived as free text
+at exactly the point untrusted input enters, and a `select` could not be fed
+from one, so the obvious control for a closed set did not exist. Both are now
+in: `status enum todo doing done` is a parameter type, refused at the boundary
+against its own values, and `select status` with no `from=` offers them.
 
 The store persists on request: `Store.Snapshot` and `Store.Restore` move it to
 and from plain JSON, and `kiln dev --data <file>` loads at startup and saves

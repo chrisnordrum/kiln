@@ -8,6 +8,7 @@ package render
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"kiln/internal/ast"
@@ -24,6 +25,9 @@ func Text(e *eval.Evaluator, r *ast.Route, env *eval.Env) string {
 type writer struct {
 	e  *eval.Evaluator
 	sb strings.Builder
+	// form is the action of the form being written, so a bare select can
+	// report the options that action accepts.
+	form *ast.Action
 }
 
 func (w *writer) line(depth int, parts ...string) {
@@ -71,8 +75,56 @@ func (w *writer) node(n *ast.Node, env *eval.Env, depth int) {
 	parts := []string{n.Kind}
 	parts = append(parts, w.args(n, env)...)
 	parts = append(parts, w.attrs(n, env)...)
+	// A bare select takes its options from the action, so the source line does
+	// not show them. The snapshot has to, or the one channel that pins what a
+	// page actually offers would be silent about the values.
+	if n.Kind == "select" {
+		if _, ok := n.Attr("from"); !ok {
+			if vals := w.selectEnum(n); len(vals) > 0 {
+				parts = append(parts, "options="+strconv.Quote(strings.Join(vals, ", ")))
+			}
+		}
+	}
 	w.line(depth, parts...)
+	if n.Kind == "form" {
+		outer := w.form
+		w.form = w.action(n)
+		w.nodes(n.Children, env, depth+1)
+		w.form = outer
+		return
+	}
 	w.nodes(n.Children, env, depth+1)
+}
+
+// selectEnum finds the values a bare select offers.
+func (w *writer) selectEnum(n *ast.Node) []string {
+	if w.form == nil || len(n.Args) == 0 {
+		return nil
+	}
+	name, ok := n.Args[0].(*ast.Name)
+	if !ok {
+		return nil
+	}
+	for _, p := range w.form.In {
+		if p.Name == name.String() {
+			return p.Enum
+		}
+	}
+	return nil
+}
+
+// action resolves a node's do= to the action it names.
+func (w *writer) action(n *ast.Node) *ast.Action {
+	a, ok := n.Attr("do")
+	if !ok {
+		return nil
+	}
+	name, ok := a.Value.(*ast.Name)
+	if !ok {
+		return nil
+	}
+	act, _ := w.e.P.Action(name.String())
+	return act
 }
 
 // args renders positional arguments. input, select and area name a form field

@@ -328,6 +328,7 @@ func (c *checker) checkNodeAttrs(n *ast.Node, spec element, sc *scope, r *ast.Ro
 		if n.Kind == "form" {
 			for _, ch := range n.Children {
 				collectFormFields(ch, supplied)
+				c.checkSelects(ch, action)
 			}
 		}
 		for _, p := range action.In {
@@ -338,6 +339,56 @@ func (c *checker) checkNodeAttrs(n *ast.Node, spec element, sc *scope, r *ast.Ro
 			}
 		}
 	}
+}
+
+// checkSelects validates every select that leans on its action for options.
+//
+// `select status` with no from= offers the values of the action's status
+// parameter, so that parameter has to be an enum. Deriving the options from
+// the action rather than repeating them in the view is what stops the two
+// disagreeing: there is one list, and it is the one the call is checked
+// against.
+func (c *checker) checkSelects(n *ast.Node, action *ast.Action) {
+	if n.Kind == "select" {
+		if _, ok := n.Attr("from"); !ok {
+			c.checkSelectParam(n, action)
+		}
+	}
+	for _, ch := range n.Children {
+		c.checkSelects(ch, action)
+	}
+	for _, ch := range n.Else {
+		c.checkSelects(ch, action)
+	}
+}
+
+func (c *checker) checkSelectParam(n *ast.Node, action *ast.Action) {
+	name, ok := n.Args[0].(*ast.Name)
+	if !ok {
+		return
+	}
+	for _, p := range action.In {
+		if p.Name != name.String() {
+			continue
+		}
+		if p.Type != "enum" {
+			c.errf(n.Pos, "K030", "select %s has no from= and %s's %s is %s, not an enum",
+				name, action.Name, p.Name, p.Type).
+				fix("add from=<list>, or declare the parameter as `" + p.Name + " enum a b c`")
+		}
+		return
+	}
+	c.errf(n.Pos, "K031", "%s has no parameter named %s", action.Name, name).
+		near(diag.Suggest(name.String(), paramNames(action))).
+		fix("add from=<list>, or name a parameter the action declares")
+}
+
+func paramNames(a *ast.Action) []string {
+	out := make([]string, 0, len(a.In))
+	for _, p := range a.In {
+		out = append(out, p.Name)
+	}
+	return out
 }
 
 // collectFormFields records the parameter names a form's inputs supply.

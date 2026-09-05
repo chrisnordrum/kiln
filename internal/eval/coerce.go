@@ -66,6 +66,11 @@ func Coerce(raw any, kind string) (Value, error) {
 			return x != 0, nil
 		}
 
+	case "enum":
+		// Membership is checked where the permitted values are known, which
+		// is the action's parameter, not here.
+		return toText(raw), nil
+
 	case "at":
 		switch x := raw.(type) {
 		case time.Time:

@@ -24,4 +24,5 @@ route project_detail
         input title text required label="New task" max=200
         area notes label="Notes" rows=2
         input estimate int label="Estimate"
+        select priority label="Priority"
         submit "Add task"

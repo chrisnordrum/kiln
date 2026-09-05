@@ -2,7 +2,7 @@ action add_expense
   in
     report ref Report
     description text max 200
-    category text max 20
+    category enum travel meals supplies software other
     amount num
     spent_on at
   allow session.user == Report[report].owner
