@@ -1,0 +1,32 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: gofmt
+        run: test -z "$(gofmt -l . | tee /dev/stderr)"
+      - run: go vet ./...
+      - run: go test ./...
+      - run: go build -o kiln ./cmd/kiln
+
+      # The e2e suite asserts these too; running the binary here proves the
+      # built artifact agrees with the tests, not just the packages.
+      - name: examples
+        run: |
+          for e in examples/*; do
+            ./kiln fmt --check "$e"
+            ./kiln check "$e"
+            ./kiln test "$e"
+            ./kiln snap --check "$e"
+          done

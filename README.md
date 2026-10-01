@@ -1,5 +1,7 @@
 # Kiln
 
+[![ci](https://github.com/chrisnordrum/kiln/actions/workflows/ci.yml/badge.svg)](https://github.com/chrisnordrum/kiln/actions/workflows/ci.yml)
+
 A full-stack web language whose users are LLM coding agents.
 
 React exists to serve human needs — readability, componentization, a hiring
