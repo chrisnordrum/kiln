@@ -138,7 +138,7 @@ the same guarantee and a change that breaks any of them fails the suite.
 
 Working end to end: lexer, parser, canonical formatter, whole-program checker,
 evaluator, text and HTML renderers, test runner, dev server, and the three
-orientation commands. 201 tests, zero dependencies, reference at 59% of its
+orientation commands. 203 tests, zero dependencies, reference at 60% of its
 3,000-token budget.
 
 A second app was written against the language as a check on the first —

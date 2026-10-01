@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -76,6 +77,46 @@ func TestExampleSnapshotsMatch(t *testing.T) {
 			t.Errorf("snapshots drifted:\n%s", got)
 		}
 	})
+}
+
+// The README's showcase route and its snapshot are quoted from the tasks
+// example. They had drifted far enough that the route no longer checked —
+// three parameters short — in a document whose whole claim is that this
+// language does not let that happen. Each fenced block that opens like the
+// example file must be that file, body for body.
+func TestReadmeQuotesTheExample(t *testing.T) {
+	readme := readFile(t, filepath.Join("..", "..", "README.md"))
+	for _, q := range []struct{ file, skip string }{
+		{"routes/project_detail.kiln", ""},
+		{"snap/detail-page-lists-tasks.txt", "## /projects/1\n\n"},
+	} {
+		want := readFile(t, filepath.Join("..", "..", "examples", "tasks", q.file))
+		if i := strings.Index(want, q.skip); q.skip != "" && i >= 0 {
+			want = want[i+len(q.skip):]
+		}
+		first, _, _ := strings.Cut(want, "\n")
+		found := false
+		for _, block := range strings.Split(readme, "```\n")[1:] {
+			if strings.HasPrefix(block, first+"\n") {
+				found = true
+				if block != want {
+					t.Errorf("README quotes %s and has drifted from it; paste it in again", q.file)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("README no longer quotes %s, whose first line is %q", q.file, first)
+		}
+	}
+}
+
+func readFile(t *testing.T, path string) string {
+	t.Helper()
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
 }
 
 // A project directory with no Kiln files should say so plainly rather than

@@ -26,24 +26,34 @@ route project_detail
   view
     page title=project.title
       head 2 "Tasks"
+      text plural(count(tasks), "task", "tasks")
+      text sum(tasks.estimate)
       when count(tasks) == 0
         empty "No tasks yet."
       each tasks as t
-        row gap=2
-          check value=t.done do=toggle_task id=t.id done=$value
-          text t.title
-          button "Delete" confirm="Delete task?" do=delete_task id=t.id style=quiet
+        col gap=0
+          row gap=2
+            check do=toggle_task done=$value id=t.id value=t.done
+            text t.title
+            badge t.priority
+            button "Delete" confirm="Delete task?" do=delete_task id=t.id style=quiet
+          when t.notes != null
+            text t.notes style=quiet
       form do=add_task project=params.id
         input title text required label="New task" max=200
+        area notes label="Notes" rows=2
+        input estimate int label="Estimate"
+        select priority label="Priority"
         submit "Add task"
 ```
 
 Queries, guard, view and event bindings are all here. Nothing about this screen
-lives anywhere else.
+lives anywhere else. This is `examples/tasks/routes/project_detail.kiln`
+verbatim, and a test fails if the two drift.
 
 ## What the checker proves
 
-`kiln check` runs in ~33ms and proves, before anything runs:
+`kiln check` runs in milliseconds and proves, before anything runs:
 
 - no reference to a field that does not exist anywhere in the app
 - every `do=` names a real action, with every parameter supplied at the right type
@@ -56,7 +66,7 @@ bound from a route with no guard establishing it, is a button that renders for
 anonymous visitors and always denies them.
 
 ```
-routes/project_detail.kiln:14: K022: no action named toggle_tsak
+routes/project_detail.kiln:17: K022: no action named toggle_tsak
     did you mean: toggle_task
     fix: declare it in actions/, or bind one that exists
 ```
@@ -74,17 +84,25 @@ substituted, each control's whole behavior on one line:
 ```
 page title="Site"
   head 2 "Tasks"
-  row gap=2
-    check do=toggle_task(done=$value, id=1) value=false
-    text "Ship it"
-    button "Delete" do=delete_task(id=1) confirm="Delete task?" style=quiet
+  text "task"
+  text "0"
+  col gap=0
+    row gap=2
+      check do=toggle_task(done=$value, id=1) value=false
+      text "Ship it"
+      badge "normal"
+      button "Delete" do=delete_task(id=1) confirm="Delete task?" style=quiet
   form do=add_task(project="1")
     input title text required label="New task" max=200
+    area notes label="Notes" rows=2
+    input estimate int label="Estimate"
+    select priority label="Priority" options="low, normal, high"
     submit "Add task"
 ```
 
 Snapshots are committed, so a UI change is a reviewable text diff and drift is a
-failing check.
+failing check. The `options=` line is worth a look: the view never lists the
+priorities, so the snapshot prints the ones the action will accept.
 
 ## Orientation in one call
 
@@ -95,7 +113,7 @@ view binding and test step, distinguishing definitions from uses.
 
 ## The constraint that shapes everything
 
-`kiln docs` emits the complete language in ~1,550 tokens. A test fails the build
+`kiln docs` emits the complete language in ~1,800 tokens. A test fails the build
 if it exceeds 3,000. When the cap is hit the answer is to cut a feature, never to
 raise the cap — because the moment the language stops fitting in context, an
 agent starts guessing, and guessing is the cost this whole design exists to
@@ -108,17 +126,15 @@ server action → mutation → re-query → patch. No client state, no effects, 
 lifecycle, no client/server boundary — so the agent never simulates time, and
 those bug classes stop existing rather than being caught.
 
-## Status
+## Try it
 
-Working end to end: lexer, parser, canonical formatter, whole-program checker,
-evaluator, text and HTML renderers, test runner and dev server. 152 tests.
-~7,500 lines of Go and **zero dependencies** — the standard library covers it.
+Needs Go 1.27 or later.
 
-Not yet done: persistence (the store is in memory, a backend swap behind the
-existing interface), and `kiln docs` is not yet shipped as a Claude Code skill.
+```
+go install github.com/chrisnordrum/kiln/cmd/kiln@latest
+```
 
-Human maintainability is explicitly traded away. Not for marketing sites (no
-static export) or canvas/drag UIs (a server round-trip per interaction).
+Or from a clone, which is where the examples are:
 
 ```
 go build -o kiln ./cmd/kiln
@@ -128,3 +144,34 @@ go build -o kiln ./cmd/kiln
 ./kiln test examples/tasks
 ./kiln dev examples/tasks      # http://localhost:7777/projects/1
 ```
+
+`kiln dev --data app.json` keeps the store across restarts. Without it the
+store is in memory, and `kiln test` and `kiln snap` always start empty either
+way, so a test never depends on what ran before it.
+
+## Status
+
+An experiment, not a product. Working end to end: lexer, parser, canonical
+formatter, whole-program checker, evaluator, text and HTML renderers, test
+runner and dev server, with two example apps held to the same four guarantees.
+About 8,300 lines of Go plus 3,700 of tests, and **zero dependencies** — the
+standard library covers it.
+
+Whether the design works is a question for agents, not for its author, so it
+was tested that way: four cold Claude Code sessions, each given only `kiln docs`
+and a feature request. [`eval/RESULTS.md`](eval/RESULTS.md) has the method, the
+pre-registered scoring and what went wrong, including a task the language could
+not express at all. Everything it found is fixed; a second round is next.
+
+Not yet done: `kiln docs` is not shipped as a Claude Code skill, so a session
+has to be told to read it.
+
+Human maintainability is explicitly traded away. Not for marketing sites (no
+static export) or canvas/drag UIs (a server round-trip per interaction).
+
+[CLAUDE.md](CLAUDE.md) is the contributor guide — for agents and people alike —
+including the design decisions that look like mistakes and why they are not.
+
+## License
+
+MIT
