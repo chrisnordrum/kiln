@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"kiln/internal/ast"
-	"kiln/internal/check"
-	"kiln/internal/diag"
-	"kiln/internal/eval"
-	"kiln/internal/parse"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/check"
+	"github.com/chrisnordrum/kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/eval"
+	"github.com/chrisnordrum/kiln/internal/parse"
 )
 
 const app = `app t

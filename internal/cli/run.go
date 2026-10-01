@@ -8,12 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"kiln/internal/ast"
-	"kiln/internal/check"
-	"kiln/internal/diag"
-	"kiln/internal/parse"
-	"kiln/internal/project"
-	"kiln/internal/runner"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/check"
+	"github.com/chrisnordrum/kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/parse"
+	"github.com/chrisnordrum/kiln/internal/project"
+	"github.com/chrisnordrum/kiln/internal/runner"
 )
 
 // loadChecked parses and checks a project, reporting diagnostics rather than

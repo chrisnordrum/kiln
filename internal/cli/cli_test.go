@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"kiln/internal/docs"
+	"github.com/chrisnordrum/kiln/internal/docs"
 )
 
 // The reference is the spec, so a command that exists must be documented and a

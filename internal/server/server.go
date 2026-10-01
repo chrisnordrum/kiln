@@ -18,10 +18,10 @@ import (
 	"os"
 	"sync"
 
-	"kiln/internal/ast"
-	"kiln/internal/eval"
-	"kiln/internal/render"
-	"kiln/internal/runner"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/eval"
+	"github.com/chrisnordrum/kiln/internal/render"
+	"github.com/chrisnordrum/kiln/internal/runner"
 )
 
 //go:embed client.js

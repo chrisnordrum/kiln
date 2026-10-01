@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode"
 
-	"kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/diag"
 )
 
 // Structural limits from design rule 9. They exist so an agent's edits land:

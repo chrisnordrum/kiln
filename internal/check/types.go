@@ -8,7 +8,7 @@ package check
 import (
 	"strings"
 
-	"kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/ast"
 )
 
 // Kind is a value's broad shape.

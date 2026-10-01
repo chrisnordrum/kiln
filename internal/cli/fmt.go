@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"kiln/internal/format"
-	"kiln/internal/project"
+	"github.com/chrisnordrum/kiln/internal/format"
+	"github.com/chrisnordrum/kiln/internal/project"
 )
 
 func runFmt(args []string, out, errw io.Writer) error {

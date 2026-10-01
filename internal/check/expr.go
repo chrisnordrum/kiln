@@ -3,8 +3,8 @@ package check
 import (
 	"strings"
 
-	"kiln/internal/ast"
-	"kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/diag"
 )
 
 // scope is what names mean at one point in a program.

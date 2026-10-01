@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/ast"
 )
 
 // Persistence is a snapshot the caller asks for, never a behaviour the store

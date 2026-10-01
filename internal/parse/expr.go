@@ -3,9 +3,9 @@ package parse
 import (
 	"fmt"
 
-	"kiln/internal/ast"
-	"kiln/internal/diag"
-	"kiln/internal/lex"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/lex"
 )
 
 // binPrec is operator precedence, loosest first. `and`/`or`/`not` arrive as

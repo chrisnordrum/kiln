@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"kiln/internal/ast"
-	"kiln/internal/diag"
-	"kiln/internal/lex"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/lex"
 )
 
 // parseOneExpr parses a bare expression, for tests.

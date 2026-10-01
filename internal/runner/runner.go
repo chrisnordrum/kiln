@@ -10,9 +10,9 @@ import (
 	"slices"
 	"strings"
 
-	"kiln/internal/ast"
-	"kiln/internal/eval"
-	"kiln/internal/render"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/eval"
+	"github.com/chrisnordrum/kiln/internal/render"
 )
 
 // Denied is returned when an action's allow rule refuses the caller. It is an

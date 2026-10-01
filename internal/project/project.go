@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"kiln/internal/parse"
+	"github.com/chrisnordrum/kiln/internal/parse"
 )
 
 // Ext is the source file extension.

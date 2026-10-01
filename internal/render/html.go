@@ -6,8 +6,8 @@ import (
 	"html"
 	"strings"
 
-	"kiln/internal/ast"
-	"kiln/internal/eval"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/eval"
 )
 
 // HTML renders a route's view as the markup the browser receives.

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"kiln/internal/ast"
-	"kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/diag"
 )
 
 // exampleFiles loads the example program that the toolchain is built toward.

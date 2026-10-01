@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/ast"
 )
 
 // Map renders the whole app as a short outline: every table, action, route and

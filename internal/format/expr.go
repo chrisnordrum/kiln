@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"kiln/internal/ast"
-	"kiln/internal/parse"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/parse"
 )
 
 // Expr renders an expression in canonical form, adding exactly the parentheses

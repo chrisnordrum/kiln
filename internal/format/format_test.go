@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"kiln/internal/parse"
-	"kiln/internal/project"
+	"github.com/chrisnordrum/kiln/internal/parse"
+	"github.com/chrisnordrum/kiln/internal/project"
 )
 
 func fmtSrc(t *testing.T, src string) string {

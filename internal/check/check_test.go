@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"kiln/internal/diag"
-	"kiln/internal/parse"
+	"github.com/chrisnordrum/kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/parse"
 )
 
 // base is the schema every case below is checked against.

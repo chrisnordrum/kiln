@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/ast"
 )
 
 // Occurrence is one place a symbol is defined or used.

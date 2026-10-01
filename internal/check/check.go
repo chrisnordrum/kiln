@@ -1,8 +1,8 @@
 package check
 
 import (
-	"kiln/internal/ast"
-	"kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/diag"
 )
 
 // checker carries the program and the diagnostics being accumulated.

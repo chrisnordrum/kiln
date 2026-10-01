@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/diag"
 )
 
 func lexOK(t *testing.T, src string) []*Line {

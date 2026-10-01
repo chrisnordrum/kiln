@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"kiln/internal/ast"
-	"kiln/internal/eval"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/eval"
 )
 
 // Result is one test's outcome.

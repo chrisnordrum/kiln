@@ -15,10 +15,10 @@ import (
 	"strconv"
 	"strings"
 
-	"kiln/internal/ast"
-	"kiln/internal/diag"
-	"kiln/internal/lex"
-	"kiln/internal/parse"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/lex"
+	"github.com/chrisnordrum/kiln/internal/parse"
 )
 
 // File formats one source file. On a parse error it returns the input

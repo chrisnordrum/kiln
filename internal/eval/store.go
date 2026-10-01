@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/ast"
 )
 
 // Store holds every row in the program.

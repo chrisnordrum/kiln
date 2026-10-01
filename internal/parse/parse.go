@@ -8,9 +8,9 @@ package parse
 import (
 	"strconv"
 
-	"kiln/internal/ast"
-	"kiln/internal/diag"
-	"kiln/internal/lex"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/lex"
 )
 
 // File is one source file to parse.

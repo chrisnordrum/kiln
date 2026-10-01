@@ -39,10 +39,13 @@ mkdir -p "$DEST"
 # drop the symbol and DWARF tables, about 3MB.
 #
 # It is a reduction, not a fix. Go keeps a module-relative file table for
-# tracebacks, so `kiln/internal/check/route.go` survives and cannot be removed.
-# That leaves a map of the implementation, not the implementation: a name is
-# only worth something if the file is also reachable. Keeping the repo out of
-# reach is still the control that matters, and nothing here enforces it.
+# tracebacks, so `github.com/chrisnordrum/kiln/internal/check/route.go`
+# survives and cannot be removed. That leaves a map of the implementation, not
+# the implementation: a name is only worth something if the file is also
+# reachable. Since the repo went public it is — the module path is a URL — so
+# a session under test must be denied web access as well as the local repo.
+# Keeping the source out of reach is still the control that matters, and
+# nothing here enforces it.
 ( cd "$REPO" && go build -trimpath -ldflags="-s -w" -o "$DEST/kiln" ./cmd/kiln )
 cp -r "$REPO/examples/tasks" "$DEST/app"
 

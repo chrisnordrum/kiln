@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"kiln/internal/ast"
-	"kiln/internal/diag"
-	"kiln/internal/parse"
-	"kiln/internal/project"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/parse"
+	"github.com/chrisnordrum/kiln/internal/project"
 )
 
 func example(t *testing.T) *ast.Program {

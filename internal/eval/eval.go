@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/ast"
 )
 
 // Env is what names mean at one point during evaluation.

@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"kiln/internal/ast"
-	"kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/diag"
 )
 
 func sprintf(format string, a ...any) string { return fmt.Sprintf(format, a...) }

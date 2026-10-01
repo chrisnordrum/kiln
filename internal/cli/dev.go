@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"kiln/internal/ast"
-	"kiln/internal/eval"
-	"kiln/internal/server"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/eval"
+	"github.com/chrisnordrum/kiln/internal/server"
 )
 
 func runDev(args []string, out, errw io.Writer) error {

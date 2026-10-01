@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/diag"
 )
 
 // parseSrc parses a single synthetic file.

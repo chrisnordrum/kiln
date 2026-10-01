@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"kiln/internal/ast"
-	"kiln/internal/eval"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/eval"
 )
 
 // Text renders a route's view against the data already bound in env.

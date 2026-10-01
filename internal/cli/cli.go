@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"kiln/internal/diag"
-	"kiln/internal/docs"
+	"github.com/chrisnordrum/kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/docs"
 )
 
 // Version is the build version, overridden at link time.

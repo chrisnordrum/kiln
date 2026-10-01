@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"kiln/internal/ast"
-	"kiln/internal/diag"
-	"kiln/internal/inspect"
-	"kiln/internal/parse"
-	"kiln/internal/project"
+	"github.com/chrisnordrum/kiln/internal/ast"
+	"github.com/chrisnordrum/kiln/internal/diag"
+	"github.com/chrisnordrum/kiln/internal/inspect"
+	"github.com/chrisnordrum/kiln/internal/parse"
+	"github.com/chrisnordrum/kiln/internal/project"
 )
 
 // loadParsed parses without checking. Orientation and scaffolding are most

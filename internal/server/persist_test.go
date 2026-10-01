@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"kiln/internal/eval"
+	"github.com/chrisnordrum/kiln/internal/eval"
 )
 
 // The point of persistence is that a restart is invisible, so the test is two
