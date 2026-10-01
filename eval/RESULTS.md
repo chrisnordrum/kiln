@@ -78,7 +78,7 @@ The implementation is correct and the choices are the right ones:
 
 **My pre-registered prediction was wrong.** I predicted K053 would bite — that
 a new non-nullable `archived bool` would break `add_task` in a different file,
-exercising the cross-file consequence React cannot catch. The session added
+exercising the cross-file consequence a frontend framework cannot catch. The session added
 `archived bool = false` with a default, so `add_task` needed no change at all
 and K053 never fired. The situation I wanted to observe was avoided rather than
 survived. Recording it as a miss: the schema's default mechanism steered the

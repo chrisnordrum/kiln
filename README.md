@@ -4,12 +4,12 @@
 
 A full-stack web language whose users are LLM coding agents.
 
-React exists to serve human needs — readability, componentization, a hiring
-pool. Agents inherit that surface without needing any of it and pay for it: a
-screen's behavior is spread across components, hooks, context, CSS and a server
-boundary, so one change costs many file reads; hook rules and effect timing are
-statically unverifiable, so those bugs surface as wrong pixels in a browser the
-agent never sees.
+Modern frontend frameworks exist to serve human needs — readability,
+componentization, a hiring pool. Agents inherit that surface without needing any
+of it and pay for it: a screen's behavior is spread across components, hooks,
+state, CSS and a server boundary, so one change costs many file reads; effect
+timing and render lifecycles are statically unverifiable, so those bugs surface
+as wrong pixels in a browser the agent never sees.
 
 The fix is not terser syntax. Novel terse syntax is out-of-distribution for the
 model and has no redundancy, so one bad token is both unrecoverable and
@@ -63,7 +63,7 @@ verbatim, and a test fails if the two drift.
 - every style token is real — the vocabulary is closed, there is no CSS
 - **no control is wired to an action the route's guard can never satisfy**
 
-That last one has no React equivalent. An action allowing on `session.user`,
+No mainstream framework checks that last one. An action allowing on `session.user`,
 bound from a route with no guard establishing it, is a button that renders for
 anonymous visitors and always denies them.
 

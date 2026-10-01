@@ -1,8 +1,9 @@
 // Package check resolves names and types across a whole Kiln program.
 //
-// This is where the language earns its keep. React can tell you a component
-// compiles; it cannot tell you that a button's handler exists, takes the
-// arguments you passed, and is reachable by the people the route lets in.
+// This is where the language earns its keep. A frontend framework can tell you
+// a component compiles; it cannot tell you that a button's handler exists,
+// takes the arguments you passed, and is reachable by the people the route
+// lets in.
 package check
 
 import (
