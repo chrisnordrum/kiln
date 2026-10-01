@@ -190,7 +190,7 @@ result in the table comes from the separate, clean run that followed.
 **The binary is a leak, and the filesystem is not the whole of isolation.** Six
 of task 3's mining commands ran before it ever found the repo. `strings kiln`
 returned the K-code table and, from the unstripped Go binary, every
-`internal/**.go` path with `/Users/chris/Developer/kiln/` still on the front —
+`internal/**.go` path with the repo's absolute path still on the front —
 which is also how it learned where to look. `setup.sh` now builds with
 `-trimpath -ldflags="-s -w"`. That removes the absolute paths and about 3MB of
 symbols; Go's module-relative file table survives and cannot be removed, so a
